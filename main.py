@@ -29,12 +29,32 @@ def get_icon_path(icon_name):
     addon_path = xbmcaddon.Addon().getAddonInfo("path")
     return os.path.join(addon_path, 'resources', 'img', icon_name+".png")
 
+@plugin.route('/rss/<url>')
+def rss(url):
+    big_list_view = True
+    r = requests.get(url)
+    html = r.text
+    match = re.compile(
+        '<link>http://www\.imdb\.com/title/(.*?)/</link>'
+        ).findall(html)
+    ids = match
+    url = 'http://www.imdb.com/title/data?ids=%s' % ','.join(ids)
+    r = requests.get(url)
+    html = r.text
+    import json
+    imdb = json.loads(html)
+    imdb_titles = {}
+    for imdb_title in imdb:
+       imdb_titles[imdb_title] = imdb[imdb_title]['title']
+
+    return list_titles(imdb_titles)
+
 @plugin.route('/watchlist/<url>')
 def watchlist(url):
     big_list_view = True
     r = requests.get(url)
     html = r.text
-    items = []
+
     match = re.search(r'IMDbReactInitialState\.push\(({.*?})\);',html)
     if match:
         data = match.group(1)
@@ -54,101 +74,105 @@ def watchlist(url):
             imdb = json.loads(html)
             for imdb_title in imdb:
                imdb_titles[imdb_title] = imdb[imdb_title]['title']
-        for imdb_title in imdb_titles:
-            imdb_data = imdb_titles[imdb_title]
-            title = '-'
-            year = ''
-            try:
-                primary = imdb_data['primary']
-                title = primary['title']
-                year = primary['year'][0]
-            except:
-                pass
-            type = ''
-            try:
-                type = imdb_data['type']
-            except:
-                pass
-            plot = ''
-            try:
-                plot = imdb_data['plot']
-                plot = HTMLParser.HTMLParser().unescape(plot.decode('utf-8'))
-            except:
-                pass
-            cast = []
-            try:
-                credits = imdb_data['credits']
-                director = credits['director']
-                cast.append(director[0]['name'])
-            except:
-                pass
-            try:
-                credits = imdb_data['credits']
-                stars = credits['star']
-                for star in stars:
-                    cast.append(star['name'])
-            except:
-                pass
-            thumbnail = 'DefaultFolder.png'
-            try:
-                poster = imdb_data['poster']
-                thumbnail = poster['url']
-            except:
-                pass
-            rating = ''
-            votes = ''
-            try:
-                ratings = imdb_data['ratings']
-                rating = ratings['rating']
-                votes = ratings['votes']
-            except:
-                pass
-            genres = []
-            certificate = '-'
-            runtime = ''
-            try:
-                metadata = imdb_data['metadata']
-                genres = metadata['genres']
-                certificate = metadata['certificate']
-                runtime = metadata['runtime']
-            except:
-                pass
-            if type == "series":
-                meta_url = "plugin://plugin.video.meta/tv/search_term/%s/1" % urllib.quote_plus(title.encode("utf8"))
-            else:
-                meta_url = 'plugin://plugin.video.meta/movies/play/imdb/%s/select' % imdb_title
-            context_items = []
-            try:
-                if type == 'featureFilm' and xbmcaddon.Addon('plugin.video.couchpotato_manager'):
-                    context_items.append(
-                    ('Add to Couch Potato', "XBMC.RunPlugin(plugin://plugin.video.couchpotato_manager/movies/add-by-id/%s)" % (imdb_title)))
-            except:
-                pass
-            try:
-                if type == 'series' and xbmcaddon.Addon('plugin.video.sickrage'):
-                    context_items.append(
-                    ('Add to Sickrage', "XBMC.RunPlugin(plugin://plugin.video.sickrage?action=addshow&&show_name=%s)" % (urllib.quote_plus(title.encode("utf8")))))
-            except:
-                pass
-            ''' #TODO
-            try:
-                if xbmcaddon.Addon('plugin.program.super.favourites'):
-                    context_items.append(
-                    ('iSearch', "XBMC.RunPlugin(plugin://plugin.program.super.favourites?mode=0&keyword=%s)" % (urllib.quote_plus(title.encode("utf8")))))
-            except:
-                pass
-            '''
-            item = {
-                'label': title,
-                'path': meta_url,
-                'thumbnail': thumbnail,
-                'info': {'title': title, 'genre': ','.join(genres),'code': imdb_title,
-                'year':year,'rating':rating,'plot': plot,
-                'mpaa': certificate,'cast': cast,'duration': runtime, 'votes': votes},
-                'context_menu': context_items,
-                'replace_context_menu': False,
-            }
-            items.append(item)
+            return list_titles(imdb_titles)
+
+def list_titles(imdb_titles):
+    items = []
+    for imdb_title in imdb_titles:
+        imdb_data = imdb_titles[imdb_title]
+        title = '-'
+        year = ''
+        try:
+            primary = imdb_data['primary']
+            title = primary['title']
+            year = primary['year'][0]
+        except:
+            pass
+        type = ''
+        try:
+            type = imdb_data['type']
+        except:
+            pass
+        plot = ''
+        try:
+            plot = imdb_data['plot']
+            plot = HTMLParser.HTMLParser().unescape(plot.decode('utf-8'))
+        except:
+            pass
+        cast = []
+        try:
+            credits = imdb_data['credits']
+            director = credits['director']
+            cast.append(director[0]['name'])
+        except:
+            pass
+        try:
+            credits = imdb_data['credits']
+            stars = credits['star']
+            for star in stars:
+                cast.append(star['name'])
+        except:
+            pass
+        thumbnail = 'DefaultFolder.png'
+        try:
+            poster = imdb_data['poster']
+            thumbnail = poster['url']
+        except:
+            pass
+        rating = ''
+        votes = ''
+        try:
+            ratings = imdb_data['ratings']
+            rating = ratings['rating']
+            votes = ratings['votes']
+        except:
+            pass
+        genres = []
+        certificate = '-'
+        runtime = ''
+        try:
+            metadata = imdb_data['metadata']
+            genres = metadata['genres']
+            certificate = metadata['certificate']
+            runtime = metadata['runtime']
+        except:
+            pass
+        if type == "series":
+            meta_url = "plugin://plugin.video.meta/tv/search_term/%s/1" % urllib.quote_plus(title.encode("utf8"))
+        else:
+            meta_url = 'plugin://plugin.video.meta/movies/play/imdb/%s/select' % imdb_title
+        context_items = []
+        try:
+            if type == 'featureFilm' and xbmcaddon.Addon('plugin.video.couchpotato_manager'):
+                context_items.append(
+                ('Add to Couch Potato', "XBMC.RunPlugin(plugin://plugin.video.couchpotato_manager/movies/add-by-id/%s)" % (imdb_title)))
+        except:
+            pass
+        try:
+            if type == 'series' and xbmcaddon.Addon('plugin.video.sickrage'):
+                context_items.append(
+                ('Add to Sickrage', "XBMC.RunPlugin(plugin://plugin.video.sickrage?action=addshow&&show_name=%s)" % (urllib.quote_plus(title.encode("utf8")))))
+        except:
+            pass
+        ''' #TODO
+        try:
+            if xbmcaddon.Addon('plugin.program.super.favourites'):
+                context_items.append(
+                ('iSearch', "XBMC.RunPlugin(plugin://plugin.program.super.favourites?mode=0&keyword=%s)" % (urllib.quote_plus(title.encode("utf8")))))
+        except:
+            pass
+        '''
+        item = {
+            'label': title,
+            'path': meta_url,
+            'thumbnail': thumbnail,
+            'info': {'title': title, 'genre': ','.join(genres),'code': imdb_title,
+            'year':year,'rating':rating,'plot': plot,
+            'mpaa': certificate,'cast': cast,'duration': runtime, 'votes': votes},
+            'context_menu': context_items,
+            'replace_context_menu': False,
+        }
+        items.append(item)
     plugin.add_sort_method(xbmcplugin.SORT_METHOD_UNSORTED)
     plugin.add_sort_method(xbmcplugin.SORT_METHOD_TITLE)
     return items
@@ -178,10 +202,14 @@ def index():
     watchlists = plugin.get_storage('watchlists')
     items = []
     for watchlist in sorted(watchlists):
+        if 'rss.imdb' in watchlists[watchlist]:
+            route = 'rss'
+        else:
+            route = 'watchlist'
         items.append(
         {
             'label': watchlist,
-            'path': plugin.url_for('watchlist', url=watchlists[watchlist]),
+            'path': plugin.url_for(route, url=watchlists[watchlist]),
             'thumbnail':get_icon_path('tv'),
         })
     items.append(
