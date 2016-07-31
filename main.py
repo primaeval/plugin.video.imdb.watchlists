@@ -166,7 +166,7 @@ def add_watchlist():
 @plugin.route('/remove_watchlist')
 def remove_watchlist():
     watchlists = plugin.get_storage('watchlists')
-    names = [w for w in watchlists]
+    names = sorted([w for w in watchlists])
     dialog = xbmcgui.Dialog()
     index = dialog.select('Select Watchlist to Remove', names)
     if index >= 0:
