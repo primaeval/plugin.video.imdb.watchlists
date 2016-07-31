@@ -1,2 +1,6 @@
+Version 0.0.2
+- support for rss lists (rss.imdb.com)
+- only first 250 items are shown
+
 Version 0.0.1
 - first release
