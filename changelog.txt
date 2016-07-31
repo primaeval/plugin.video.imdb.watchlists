@@ -1,3 +1,6 @@
+Version 0.0.3
+- force English titles
+
 Version 0.0.2
 - support for rss lists (rss.imdb.com)
 - only first 250 items are shown
