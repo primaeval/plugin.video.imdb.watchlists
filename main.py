@@ -8,7 +8,7 @@ import random
 
 from datetime import datetime,timedelta
 import time
-#import urllib
+import urllib
 #import HTMLParser
 import xbmcplugin
 #import xml.etree.ElementTree as ET
@@ -74,14 +74,14 @@ def watchlist(url):
             #log(imdb_titles)
         #return
         for imdb_title in imdb_titles:
-            log(imdb_title)
+            #log(imdb_title)
             imdb_data = imdb_titles[imdb_title]
             title = '-'
             year = ''
             try:
                 primary = imdb_data['primary']
                 title = primary['title']
-                log(title)
+                #log(title)
                 year = primary['year'][0]
                 #log(year)
             except:
@@ -96,11 +96,11 @@ def watchlist(url):
                 
             plot = ''
             try:
-                log("XXX")
+                #log("XXX")
                 plot = imdb_data['plot']
-                log(plot)
+                #log(plot)
                 plot = HTMLParser.HTMLParser().unescape(plot.decode('utf-8'))
-                log(plot)
+                #log(plot)
             except:
                 pass
                 
@@ -155,20 +155,44 @@ def watchlist(url):
             #log(genres)
             #log(certificate)
             
-            
-            #list_item = xbmcgui.ListItem(label=title)
-            #list_item.setArt({'thumb': thumbnail})
-            #list_item.setInfo('video', {'title': title, 'genre': ','.join(genres),'code': imdb_title,
-            #'year':year,'mediatype':'video','rating':rating,'plot': plot,
-            #'mpaa': certificate,'cast': cast,'duration': runtime, 'votes': votes})
-            #xbmc.log(repr(imdb_data))
+            if type == "series":
+                meta_url = "plugin://plugin.video.meta/tv/search_term/%s/1" % urllib.quote_plus(title.encode("utf8"))
+            else:
+                meta_url = 'plugin://plugin.video.meta/movies/play/imdb/%s/select' % imdb_title
+
+            context_items = []
+            try:
+                if type == 'featureFilm' and xbmcaddon.Addon('plugin.video.couchpotato_manager'):
+                    context_items.append(
+                    ('Add to Couch Potato', "XBMC.RunPlugin(plugin://plugin.video.couchpotato_manager/movies/add-by-id/%s)" % (imdb_title)))
+            except:
+                pass
+            try:
+                if type == 'series' and xbmcaddon.Addon('plugin.video.sickrage'):
+                    context_items.append(
+                    ('Add to Sickrage', "XBMC.RunPlugin(plugin://plugin.video.sickrage?action=addshow&&show_name=%s)" % (urllib.quote_plus(title.encode("utf8")))))
+            except:
+                pass
+            ''' #TODO
+            try:
+                if xbmcaddon.Addon('plugin.program.super.favourites'):
+                    context_items.append(
+                    ('iSearch', "XBMC.RunPlugin(plugin://plugin.program.super.favourites?mode=0&keyword=%s)" % (urllib.quote_plus(title.encode("utf8")))))
+            except:
+                pass                
+            '''
             item = {
                 'label': title,
+                'path': meta_url,
                 'thumbnail': thumbnail,
                 'info': {'title': title, 'genre': ','.join(genres),'code': imdb_title,
                 'year':year,'rating':rating,'plot': plot,
-                'mpaa': certificate,'cast': cast,'duration': runtime, 'votes': votes}
+                'mpaa': certificate,'cast': cast,'duration': runtime, 'votes': votes},
+                'context_menu': context_items,
+                'replace_context_menu': False,
             }
+            #log(context_items)
+            #item.add_context_menu_items(context_items)
             items.append(item)
     plugin.add_sort_method(xbmcplugin.SORT_METHOD_UNSORTED)            
     plugin.add_sort_method(xbmcplugin.SORT_METHOD_TITLE)
