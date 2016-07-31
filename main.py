@@ -2,7 +2,7 @@ from xbmcswift2 import Plugin
 from xbmcswift2 import actions
 import xbmc,xbmcaddon,xbmcvfs,xbmcgui
 import re
-
+import HTMLParser
 import requests
 import random
 
@@ -47,44 +47,89 @@ def watchlist(url):
         #for imdb_item in imdb_items:
             #log(imdb_item)
         imdb_titles = imdb['titles']
+        all = [i['const'] for i in imdb_items]
+        #log(all)
+        #log(len(all))
+        got = [i for i in imdb_titles]
+        #log(got)
+        #log(len(got))
+        missing = set(all) - set(got)
+        #log(len(missing))
+        
+        if missing:
+            #log(missing)
+            ids = list(missing)
+            url = 'http://www.imdb.com/title/data?ids=%s' % ','.join(ids)
+            #log(url)
+            r = requests.get(url)
+            html = r.text
+            imdb = json.loads(html)
+            #log(imdb)
+            #imdb_titles2 = imdb['titles']
+            #log(imdb)
+            #log(imdb_titles2)
+            #imdb_titles.update(imdb_titles2)
+            for imdb_title in imdb:
+               imdb_titles[imdb_title] = imdb[imdb_title]['title']
+            #log(imdb_titles)
+        #return
         for imdb_title in imdb_titles:
-            #log(imdb_title)
+            log(imdb_title)
             imdb_data = imdb_titles[imdb_title]
-            primary = imdb_data['primary']
-            title = primary['title']
-            log(title)
-            year = primary['year'][0]
-            log(year)
-            
-            type = imdb_data['type']
-            log(type)
-            
-            plot = imdb_data['plot']
-            log(plot)
-            credits = imdb_data['credits']
-            stars = credits['star']
+            title = '-'
+            year = ''
+            try:
+                primary = imdb_data['primary']
+                title = primary['title']
+                log(title)
+                year = primary['year'][0]
+                #log(year)
+            except:
+                pass
+                
+            type = ''
+            try:
+                type = imdb_data['type']
+                #log(type)
+            except:
+                pass
+                
+            plot = ''
+            try:
+                log("XXX")
+                plot = imdb_data['plot']
+                log(plot)
+                plot = HTMLParser.HTMLParser().unescape(plot.decode('utf-8'))
+                log(plot)
+            except:
+                pass
+                
+
             
             cast = []
             try:
+                credits = imdb_data['credits']
                 director = credits['director']
                 cast.append(director[0]['name'])
             except:
                 pass
             try:
+                credits = imdb_data['credits']
+                stars = credits['star']              
                 for star in stars:
                     cast.append(star['name'])
             except:
                 pass
-            log(cast)
+            #log(cast)
             
-            thumbnail = ''
+            thumbnail = 'DefaultFolder.png'
             try:
                 poster = imdb_data['poster']
                 #log(poster)
                 thumbnail = poster['url']
             except:
                 pass
-            log(thumbnail)
+            #log(thumbnail)
             
             rating = ''
             votes = ''
@@ -94,22 +139,39 @@ def watchlist(url):
                 votes = ratings['votes']
             except:
                 pass
-            log(rating)
-            log(votes)
+            #log(rating)
+            #log(votes)
     
             genres = []
-            certificate = ''
+            certificate = '-'
+            runtime = ''
             try:
                 metadata = imdb_data['metadata']
                 genres = metadata['genres']
                 certificate = metadata['certificate']
+                runtime = metadata['runtime']
             except:
                 pass
-            log(genres)
-            log(certificate)
+            #log(genres)
+            #log(certificate)
             
-            items.append({'label':title,'thumbnail':thumbnail})
             
+            #list_item = xbmcgui.ListItem(label=title)
+            #list_item.setArt({'thumb': thumbnail})
+            #list_item.setInfo('video', {'title': title, 'genre': ','.join(genres),'code': imdb_title,
+            #'year':year,'mediatype':'video','rating':rating,'plot': plot,
+            #'mpaa': certificate,'cast': cast,'duration': runtime, 'votes': votes})
+            #xbmc.log(repr(imdb_data))
+            item = {
+                'label': title,
+                'thumbnail': thumbnail,
+                'info': {'title': title, 'genre': ','.join(genres),'code': imdb_title,
+                'year':year,'rating':rating,'plot': plot,
+                'mpaa': certificate,'cast': cast,'duration': runtime, 'votes': votes}
+            }
+            items.append(item)
+    plugin.add_sort_method(xbmcplugin.SORT_METHOD_UNSORTED)            
+    plugin.add_sort_method(xbmcplugin.SORT_METHOD_TITLE)
     return items
     
     
