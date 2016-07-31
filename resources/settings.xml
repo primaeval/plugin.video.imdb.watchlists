@@ -1,4 +1,8 @@
 <settings>
+<category label="Watchlists">
+<setting label="Add Watchlist" type="action" action="PlayMedia(plugin://plugin.video.imdb.watchlists/?action=add_watchlist"/>
+<setting label="Remove Watchlist" type="action" action="XBMC.RunPlugin(plugin://plugin.video.imdb.watchlists/?remove_watchlist"/>
+</category>
 <category label="Display">
 <setting id="view_mode" label="View Mode" type="number" default="51" />
 </category>

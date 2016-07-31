@@ -17,6 +17,8 @@ import os
 #import shutil
 #from rpc import RPC
 from types import *
+import sys
+xbmc.log(repr(sys.argv))
 
 plugin = Plugin()
 big_list_view = False
@@ -30,7 +32,9 @@ def get_icon_path(icon_name):
 
 @plugin.route('/watchlist/<url>')
 def watchlist(url):
-    url = 'http://www.imdb.com/user/ur24041325/watchlist'
+    big_list_view = True
+    
+    #url = 'http://www.imdb.com/user/ur24041325/watchlist'
     r = requests.get(url)
     html = r.text
     #log(html)
@@ -199,17 +203,55 @@ def watchlist(url):
     return items
     
     
-
+@plugin.route('/add_watchlist')
+def add_watchlist():
+    dialog = xbmcgui.Dialog()
+    url = dialog.input('Enter Watchlist Url', type=xbmcgui.INPUT_ALPHANUM)
+    if url:
+        name = dialog.input('Enter Watchlist Name', type=xbmcgui.INPUT_ALPHANUM)
+        if name:
+            watchlists = plugin.get_storage('watchlists')
+            watchlists[name] = url
+            
+@plugin.route('/remove_watchlist')
+def remove_watchlist():
+    watchlists = plugin.get_storage('watchlists')
+    names = [w for w in watchlists]
+    dialog = xbmcgui.Dialog()
+    index = dialog.select('Select Watchlist to Remove', names)
+    if index >= 0:
+        name = names[index]
+        del watchlists[name]
 
 @plugin.route('/')
 def index():
-    items = [
+    watchlists = plugin.get_storage('watchlists')
+    #log(watchlists)
+    #wl = [n for n in watchlists]
+    #if len(wl) == 0:
+    #    plugin.open_settings()
+    items = []
+   
+    for watchlist in sorted(watchlists):
+        items.append(
+        {
+            'label': watchlist,
+            'path': plugin.url_for('watchlist', url=watchlists[watchlist]),
+            'thumbnail':get_icon_path('tv'),
+        })
+        
+    items.append(
     {
-        'label': 'Watchlist',
-        'path': plugin.url_for('watchlist', url="http://www.imdb.com/user/ur24041325/watchlist"),
-        'thumbnail':get_icon_path('tv'),
-    },
-    ]
+        'label': "Add Watchlist",
+        'path': plugin.url_for('add_watchlist'),
+        'thumbnail':get_icon_path('settings'),
+    })
+    items.append(
+    {
+        'label': "Remove Watchlist",
+        'path': plugin.url_for('remove_watchlist'),
+        'thumbnail':get_icon_path('settings'),
+    }) 
     return items
 
 
