@@ -171,9 +171,6 @@ def list_titles(imdb_titles,list_type):
             meta_url = "plugin://plugin.video.imdb.watchlists/meta_tvdb/%s/%s" % (imdb_title,urllib.quote_plus(title.encode("utf8")))
         elif type == "featureFilm":
             meta_url = 'plugin://plugin.video.meta/movies/play/imdb/%s/library' % imdb_title
-        log(title)
-        log(type)
-        log(meta_url)
         context_items = []
         try:
             if type == 'featureFilm' and xbmcaddon.Addon('plugin.video.couchpotato_manager'):
@@ -219,11 +216,10 @@ def list_titles(imdb_titles,list_type):
                 folder = "TV"
                 log('special://profile/addon_data/plugin.video.imdb.watchlists/TV/%s' % imdb_title)
                 try: xbmcvfs.mkdirs('special://profile/addon_data/plugin.video.imdb.watchlists/TV/%s' % imdb_title)
-                except: log("XXX")
+                except: pass
             else:
                 folder = "Movies"
                 f = xbmcvfs.File('special://profile/addon_data/plugin.video.imdb.watchlists/%s/%s.strm' % (folder,imdb_title), "wb")
-
                 f.write(meta_url.encode("utf8"))
                 f.close()
                 f = xbmcvfs.File('special://profile/addon_data/plugin.video.imdb.watchlists/%s/%s.nfo' % (folder,imdb_title), "wb")
