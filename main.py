@@ -256,31 +256,24 @@ def update_tv():
         str = "http://thetvdb.com/index.php?tab=series&id=%s" % tvdb_id
         f.write(str.encode("utf8"))
         f.close()
-        url = 'http://thetvdb.com/api/0629B785CE550C8D/series/%s/all/en.zip' % tvdb_id
-        log(url)
+        url = 'http://thetvdb.com/api/77DDC569F4547C45/series/%s/all/en.zip' % tvdb_id
         results = requests.get(url)
         data = results.content
-        #log(data)
-        zip = zipfile.ZipFile(StringIO.StringIO(data))
-        z = zip.open('en.xml')
-        xml = z.read()
-        #log(xml)
+        try:
+            zip = zipfile.ZipFile(StringIO.StringIO(data))
+            z = zip.open('en.xml')
+            xml = z.read()
+        except:
+            continue
         match = re.compile(
             '<Episode>.*?<id>(.*?)</id>.*?<EpisodeNumber>(.*?)</EpisodeNumber>.*?<SeasonNumber>(.*?)</SeasonNumber>.*?</Episode>',
-            #'<Episode>(.*?)</Episode>',
             flags=(re.DOTALL | re.MULTILINE)
             ).findall(xml)
-        #log(match)
         for id,episode,season in match:
-            #log((id,episode,season))
             f = xbmcvfs.File('special://profile/addon_data/plugin.video.imdb.watchlists/TV/%s/S%02dE%02d.strm' % (imdb_id,int(season),int(episode)),"wb")
             str = "plugin://plugin.video.meta/tv/play/%s/%d/%d/library" % (tvdb_id,int(season),int(episode))
             f.write(str.encode("utf8"))
-            f.close()
-
-    #item ={'label':title, 'path':meta_url, 'thumbnail': get_icon_path('meta')}
-    #TODO launch into Meta seasons view
-    #return [item]    
+            f.close()    
 
 @plugin.route('/add_watchlist')
 def add_watchlist():
@@ -372,12 +365,13 @@ def index():
         'path': plugin.url_for('remove_watchlist'),
         'thumbnail':get_icon_path('settings'),
     })
-    items.append(
-    {
-        'label': "Update TV Shows",
-        'path': plugin.url_for('update_tv'),
-        'thumbnail':get_icon_path('settings'),
-    })    
+    if plugin.get_setting('export') == 'true':    
+        items.append(
+        {
+            'label': "Update TV Shows",
+            'path': plugin.url_for('update_tv'),
+            'thumbnail':get_icon_path('settings'),
+        })    
     return items
 
 if __name__ == '__main__':
