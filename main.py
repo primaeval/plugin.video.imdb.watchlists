@@ -5,7 +5,7 @@ import re
 import HTMLParser
 import requests
 #import random
-#from datetime import datetime,timedelta
+from datetime import datetime,timedelta
 #import time
 import urllib
 #import HTMLParser
@@ -261,14 +261,26 @@ def update_tv():
         except:
             continue
         match = re.compile(
-            '<Episode>.*?<id>(.*?)</id>.*?<EpisodeNumber>(.*?)</EpisodeNumber>.*?<SeasonNumber>(.*?)</SeasonNumber>.*?</Episode>',
+            '<Episode>.*?<id>(.*?)</id>.*?<EpisodeNumber>(.*?)</EpisodeNumber>.*?<FirstAired>(.*?)</FirstAired>.*?<SeasonNumber>(.*?)</SeasonNumber>.*?</Episode>',
             flags=(re.DOTALL | re.MULTILINE)
             ).findall(xml)
-        for id,episode,season in match:
-            f = xbmcvfs.File('special://profile/addon_data/plugin.video.imdb.watchlists/TV/%s/S%02dE%02d.strm' % (imdb_id,int(season),int(episode)),"wb")
-            str = "plugin://plugin.video.meta/tv/play/%s/%d/%d/library" % (tvdb_id,int(season),int(episode))
-            f.write(str.encode("utf8"))
-            f.close()    
+        for id,episode,aired,season in match:
+            if aired:
+                match = re.search(r'([0-9]*?)-([0-9]*?)-([0-9]*)',aired)
+                if match:
+                    year = match.group(1)
+                    month = match.group(2)
+                    day = match.group(3)
+                    log((year,month,day))
+                    aired = datetime(year=int(year), month=int(month), day=int(day))
+                    today = datetime.today()
+                    if aired <= today:
+                        f = xbmcvfs.File('special://profile/addon_data/plugin.video.imdb.watchlists/TV/%s/S%02dE%02d.strm' % (imdb_id,int(season),int(episode)),"wb")
+                        str = "plugin://plugin.video.meta/tv/play/%s/%d/%d/library" % (tvdb_id,int(season),int(episode))
+                        f.write(str.encode("utf8"))
+                        f.close()  
+
+    xbmc.executebuiltin('UpdateLibrary(video)')
 
 @plugin.route('/add_watchlist')
 def add_watchlist():
