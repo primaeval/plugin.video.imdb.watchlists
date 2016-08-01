@@ -214,7 +214,6 @@ def list_titles(imdb_titles,list_type):
         if plugin.get_setting('export') == 'true':
             if type == "series":
                 folder = "TV"
-                log('special://profile/addon_data/plugin.video.imdb.watchlists/TV/%s' % imdb_title)
                 try: xbmcvfs.mkdirs('special://profile/addon_data/plugin.video.imdb.watchlists/TV/%s' % imdb_title)
                 except: pass
             else:
