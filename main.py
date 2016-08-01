@@ -260,10 +260,23 @@ def update_tv():
         log(url)
         results = requests.get(url)
         data = results.content
-        log(data)
+        #log(data)
         zip = zipfile.ZipFile(StringIO.StringIO(data))
         z = zip.open('en.xml')
-        log(z.readlines())
+        xml = z.read()
+        #log(xml)
+        match = re.compile(
+            '<Episode>.*?<id>(.*?)</id>.*?<EpisodeNumber>(.*?)</EpisodeNumber>.*?<SeasonNumber>(.*?)</SeasonNumber>.*?</Episode>',
+            #'<Episode>(.*?)</Episode>',
+            flags=(re.DOTALL | re.MULTILINE)
+            ).findall(xml)
+        #log(match)
+        for id,episode,season in match:
+            #log((id,episode,season))
+            f = xbmcvfs.File('special://profile/addon_data/plugin.video.imdb.watchlists/TV/%s/S%02dE%02d.strm' % (imdb_id,int(season),int(episode)),"wb")
+            str = "plugin://plugin.video.meta/tv/play/%s/%d/%d/library" % (tvdb_id,int(season),int(episode))
+            f.write(str.encode("utf8"))
+            f.close()
 
     #item ={'label':title, 'path':meta_url, 'thumbnail': get_icon_path('meta')}
     #TODO launch into Meta seasons view
