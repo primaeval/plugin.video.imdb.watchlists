@@ -18,6 +18,8 @@ import os
 from types import *
 #import sys
 #xbmc.log(repr(sys.argv))
+import zipfile
+import StringIO
 
 plugin = Plugin()
 
@@ -215,16 +217,19 @@ def list_titles(imdb_titles,list_type):
         if plugin.get_setting('export') == 'true':
             if type == "series":
                 folder = "TV"
+                log('special://profile/addon_data/plugin.video.imdb.watchlists/TV/%s' % imdb_title)
+                try: xbmcvfs.mkdirs('special://profile/addon_data/plugin.video.imdb.watchlists/TV/%s' % imdb_title)
+                except: log("XXX")
             else:
                 folder = "Movies"
-            f = xbmcvfs.File('special://profile/addon_data/plugin.video.imdb.watchlists/%s/%s.strm' % (folder,imdb_title), "wb")
+                f = xbmcvfs.File('special://profile/addon_data/plugin.video.imdb.watchlists/%s/%s.strm' % (folder,imdb_title), "wb")
 
-            f.write(meta_url.encode("utf8"))
-            f.close()
-            f = xbmcvfs.File('special://profile/addon_data/plugin.video.imdb.watchlists/%s/%s.nfo' % (folder,imdb_title), "wb")
-            str = "http://www.imdb.com/title/%s/" % imdb_title
-            f.write(str.encode("utf8"))
-            f.close()
+                f.write(meta_url.encode("utf8"))
+                f.close()
+                f = xbmcvfs.File('special://profile/addon_data/plugin.video.imdb.watchlists/%s/%s.nfo' % (folder,imdb_title), "wb")
+                str = "http://www.imdb.com/title/%s/" % imdb_title
+                f.write(str.encode("utf8"))
+                f.close()
 
 
     plugin.add_sort_method(xbmcplugin.SORT_METHOD_UNSORTED)
@@ -239,6 +244,30 @@ def meta_tvdb(imdb_id,title):
     item ={'label':title, 'path':meta_url, 'thumbnail': get_icon_path('meta')}
     #TODO launch into Meta seasons view
     return [item]
+    
+@plugin.route('/update_tv')
+def update_tv():
+    root = 'special://profile/addon_data/plugin.video.imdb.watchlists/TV'
+    dirs, files = xbmcvfs.listdir(root)
+    for imdb_id in dirs:
+        tvdb_id = get_tvdb_id(imdb_id)
+        meta_url = "plugin://plugin.video.meta/tv/tvdb/%s" % tvdb_id
+        f = xbmcvfs.File('special://profile/addon_data/plugin.video.imdb.watchlists/TV/%s/tvshow.nfo' % imdb_id,"wb")
+        str = "http://thetvdb.com/index.php?tab=series&id=%s" % tvdb_id
+        f.write(str.encode("utf8"))
+        f.close()
+        url = 'http://thetvdb.com/api/0629B785CE550C8D/series/%s/all/en.zip' % tvdb_id
+        log(url)
+        results = requests.get(url)
+        data = results.content
+        log(data)
+        zip = zipfile.ZipFile(StringIO.StringIO(data))
+        z = zip.open('en.xml')
+        log(z.readlines())
+
+    #item ={'label':title, 'path':meta_url, 'thumbnail': get_icon_path('meta')}
+    #TODO launch into Meta seasons view
+    #return [item]    
 
 @plugin.route('/add_watchlist')
 def add_watchlist():
@@ -330,6 +359,12 @@ def index():
         'path': plugin.url_for('remove_watchlist'),
         'thumbnail':get_icon_path('settings'),
     })
+    items.append(
+    {
+        'label': "Update TV Shows",
+        'path': plugin.url_for('update_tv'),
+        'thumbnail':get_icon_path('settings'),
+    })    
     return items
 
 if __name__ == '__main__':
