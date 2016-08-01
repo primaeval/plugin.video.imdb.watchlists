@@ -1,3 +1,7 @@
+Version 0.0.7
+- nuke library
+- don't add unaired episodes
+
 Version 0.0.6
 - export to strm files
 
