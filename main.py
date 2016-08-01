@@ -36,8 +36,8 @@ def get_icon_path(icon_name):
     addon_path = xbmcaddon.Addon().getAddonInfo("path")
     return os.path.join(addon_path, 'resources', 'img', icon_name+".png")
 
-@plugin.route('/rss/<url>')
-def rss(url):
+@plugin.route('/rss/<url>/<type>')
+def rss(url,type):
     big_list_view = True
     r = requests.get(url, headers=headers)
     html = r.text
@@ -59,10 +59,10 @@ def rss(url):
     for imdb_title in imdb:
        imdb_titles[imdb_title] = imdb[imdb_title]['title']
 
-    return list_titles(imdb_titles)
+    return list_titles(imdb_titles,type)
 
-@plugin.route('/watchlist/<url>')
-def watchlist(url):
+@plugin.route('/watchlist/<url>/<type>')
+def watchlist(url,type):
     big_list_view = True
     r = requests.get(url, headers=headers)
     html = r.text
@@ -86,9 +86,9 @@ def watchlist(url):
             imdb = json.loads(html)
             for imdb_title in imdb:
                imdb_titles[imdb_title] = imdb[imdb_title]['title']
-        return list_titles(imdb_titles)
+        return list_titles(imdb_titles,type)
 
-def list_titles(imdb_titles):
+def list_titles(imdb_titles,list_type):
     items = []
     for imdb_title in imdb_titles:
         imdb_data = imdb_titles[imdb_title]
@@ -149,7 +149,8 @@ def list_titles(imdb_titles):
             runtime = metadata['runtime']
         except:
             pass
-        if type == "series":
+
+        if type == "series" or type == "episode":
             meta_url = "plugin://plugin.video.meta/tv/search_term/%s/1" % urllib.quote_plus(title.encode("utf8"))
         else:
             meta_url = 'plugin://plugin.video.meta/movies/play/imdb/%s/select' % imdb_title
@@ -184,7 +185,14 @@ def list_titles(imdb_titles):
             'context_menu': context_items,
             'replace_context_menu': False,
         }
-        items.append(item)
+        if list_type == "tv":
+            if type == "series" or type == "episode":
+                items.append(item)
+        elif list_type == "movies":
+            if type == "featureFilm":
+                items.append(item)
+        else:
+            items.append(item)
     plugin.add_sort_method(xbmcplugin.SORT_METHOD_UNSORTED)
     plugin.add_sort_method(xbmcplugin.SORT_METHOD_TITLE)
     return items
@@ -209,8 +217,14 @@ def remove_watchlist():
         name = names[index]
         del watchlists[name]
 
-@plugin.route('/')
-def index():
+@plugin.route('/category/<type>')
+def category(type):
+    if type == "all":
+        icon = "favourites"
+    elif type == "movies":
+        icon = "movies"
+    else:
+        icon = "tv"
     watchlists = plugin.get_storage('watchlists')
     items = []
     for watchlist in sorted(watchlists):
@@ -221,9 +235,46 @@ def index():
         items.append(
         {
             'label': watchlist,
-            'path': plugin.url_for(route, url=watchlists[watchlist]),
-            'thumbnail':get_icon_path('tv'),
+            'path': plugin.url_for(route, url=watchlists[watchlist], type=type),
+            'thumbnail':get_icon_path(icon),
         })
+    items.append(
+    {
+        'label': "Add Watchlist",
+        'path': plugin.url_for('add_watchlist'),
+        'thumbnail':get_icon_path('settings'),
+    })
+    items.append(
+    {
+        'label': "Remove Watchlist",
+        'path': plugin.url_for('remove_watchlist'),
+        'thumbnail':get_icon_path('settings'),
+    })
+    return items
+
+@plugin.route('/')
+def index():
+
+    items = []
+    items.append(
+    {
+        'label': "All",
+        'path': plugin.url_for('category', type="all"),
+        'thumbnail':get_icon_path('favourites'),
+    })
+    items.append(
+    {
+        'label': "Movies",
+        'path': plugin.url_for('category', type="movies"),
+        'thumbnail':get_icon_path('movies'),
+    })
+    items.append(
+    {
+        'label': "TV",
+        'path': plugin.url_for('category', type="tv"),
+        'thumbnail':get_icon_path('tv'),
+    })
+
     items.append(
     {
         'label': "Add Watchlist",
