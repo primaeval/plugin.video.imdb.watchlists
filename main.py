@@ -165,10 +165,13 @@ def list_titles(imdb_titles,list_type):
         except:
             pass
 
-        if type == "series" or type == "episode": #TODO episode
+        if type == "series": #TODO episode
             meta_url = "plugin://plugin.video.imdb.watchlists/meta_tvdb/%s/%s" % (imdb_title,urllib.quote_plus(title.encode("utf8")))
-        else:
+        elif type == "featureFilm":
             meta_url = 'plugin://plugin.video.meta/movies/play/imdb/%s/library' % imdb_title
+        log(title)
+        log(type)
+        log(meta_url)
         context_items = []
         try:
             if type == 'featureFilm' and xbmcaddon.Addon('plugin.video.couchpotato_manager'):
@@ -201,7 +204,7 @@ def list_titles(imdb_titles,list_type):
             'replace_context_menu': False,
         }
         if list_type == "tv":
-            if type == "series" or type == "episode":
+            if type == "series": #TODO episode
                 items.append(item)
         elif list_type == "movies":
             if type == "featureFilm":
@@ -210,7 +213,7 @@ def list_titles(imdb_titles,list_type):
             items.append(item)
 
         if plugin.get_setting('export') == 'true':
-            if type == "series" or type == "episode":
+            if type == "series":
                 folder = "TV"
             else:
                 folder = "Movies"
