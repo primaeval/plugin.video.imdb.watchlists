@@ -239,7 +239,7 @@ def meta_tvdb(imdb_id,title):
     item ={'label':title, 'path':meta_url, 'thumbnail': get_icon_path('meta')}
     #TODO launch into Meta seasons view
     return [item]
-    
+
 @plugin.route('/update_tv')
 def update_tv():
     root = 'special://profile/addon_data/plugin.video.imdb.watchlists/TV'
@@ -278,9 +278,23 @@ def update_tv():
                         f = xbmcvfs.File('special://profile/addon_data/plugin.video.imdb.watchlists/TV/%s/S%02dE%02d.strm' % (imdb_id,int(season),int(episode)),"wb")
                         str = "plugin://plugin.video.meta/tv/play/%s/%d/%d/library" % (tvdb_id,int(season),int(episode))
                         f.write(str.encode("utf8"))
-                        f.close()  
+                        f.close()
 
     xbmc.executebuiltin('UpdateLibrary(video)')
+
+@plugin.route('/nuke')
+def nuke():
+    for root in ['special://profile/addon_data/plugin.video.imdb.watchlists/TV','special://profile/addon_data/plugin.video.imdb.watchlists/Movies']:
+        root_dirs, root_files = xbmcvfs.listdir(root)
+        for root_dir in root_dirs:
+            dir = root+"/"+root_dir
+            dirs, files = xbmcvfs.listdir(dir)
+            for file in files:
+                xbmcvfs.delete("%s/%s" % (dir,file))
+            xbmcvfs.rmdir(dir)
+        for file in root_files:
+            xbmcvfs.delete("%s/%s" % (root,file))
+    xbmc.executebuiltin('CleanLibrary(video)')
 
 @plugin.route('/add_watchlist')
 def add_watchlist():
@@ -372,13 +386,19 @@ def index():
         'path': plugin.url_for('remove_watchlist'),
         'thumbnail':get_icon_path('settings'),
     })
-    if plugin.get_setting('export') == 'true':    
+    if plugin.get_setting('export') == 'true':
         items.append(
         {
             'label': "Update TV Shows",
             'path': plugin.url_for('update_tv'),
             'thumbnail':get_icon_path('settings'),
-        })    
+        })
+        items.append(
+        {
+            'label': "Delete and Clean Library",
+            'path': plugin.url_for('nuke'),
+            'thumbnail':get_icon_path('settings'),
+        })
     return items
 
 if __name__ == '__main__':
