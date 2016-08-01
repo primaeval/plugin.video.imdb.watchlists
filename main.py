@@ -74,7 +74,7 @@ def watchlist(url):
             imdb = json.loads(html)
             for imdb_title in imdb:
                imdb_titles[imdb_title] = imdb[imdb_title]['title']
-            return list_titles(imdb_titles)
+        return list_titles(imdb_titles)
 
 def list_titles(imdb_titles):
     items = []
