@@ -1,5 +1,5 @@
 <settings>
 <category label="Display">
-<setting id="view_mode" label="View Mode" type="number" default="51" />
+<setting id="english" label="English Titles" type="bool" default="false" />
 </category>
 </settings>

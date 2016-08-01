@@ -20,6 +20,13 @@ from types import *
 #xbmc.log(repr(sys.argv))
 
 plugin = Plugin()
+
+if plugin.get_setting('english') == 'true':
+    headers={'Accept-Language' : 'en',"X-Forwarded-For": "8.8.8.8"}
+else:
+    headers={}
+
+
 big_list_view = False
 
 def log(x):
@@ -32,15 +39,20 @@ def get_icon_path(icon_name):
 @plugin.route('/rss/<url>')
 def rss(url):
     big_list_view = True
-    r = requests.get(url)
+    r = requests.get(url, headers=headers)
     html = r.text
+
     match = re.compile(
         '<link>http://www\.imdb\.com/title/(.*?)/</link>'
         ).findall(html)
     ids = match
+
+    if not ids:
+        return
     url = 'http://www.imdb.com/title/data?ids=%s' % ','.join(ids)
-    r = requests.get(url)
+    r = requests.get(url, headers=headers)
     html = r.text
+
     import json
     imdb = json.loads(html)
     imdb_titles = {}
@@ -52,7 +64,7 @@ def rss(url):
 @plugin.route('/watchlist/<url>')
 def watchlist(url):
     big_list_view = True
-    r = requests.get(url)
+    r = requests.get(url, headers=headers)
     html = r.text
 
     match = re.search(r'IMDbReactInitialState\.push\(({.*?})\);',html)
@@ -69,7 +81,7 @@ def watchlist(url):
         if missing:
             ids = list(missing)
             url = 'http://www.imdb.com/title/data?ids=%s' % ','.join(ids)
-            r = requests.get(url)
+            r = requests.get(url, headers=headers)
             html = r.text
             imdb = json.loads(html)
             for imdb_title in imdb:

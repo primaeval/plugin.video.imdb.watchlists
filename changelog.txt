@@ -1,5 +1,8 @@
-Version 0.0.3
+Version 0.0.4
 - fix
+
+Version 0.0.3
+- force English titles
 
 Version 0.0.2
 - support for rss lists (rss.imdb.com)
