@@ -36,6 +36,16 @@ def get_icon_path(icon_name):
     addon_path = xbmcaddon.Addon().getAddonInfo("path")
     return os.path.join(addon_path, 'resources', 'img', icon_name+".png")
 
+def get_tvdb_id(imdb_id):
+    tvdb_url = "http://thetvdb.com//api/GetSeriesByRemoteID.php?imdbid=%s" % imdb_id
+    r = requests.get(tvdb_url)
+    tvdb_html = r.text
+    tvdb_id = ''
+    tvdb_match = re.search(r'<seriesid>(.*?)</seriesid>', tvdb_html, flags=(re.DOTALL | re.MULTILINE))
+    if tvdb_match:
+        tvdb_id = tvdb_match.group(1)
+    return tvdb_id
+
 @plugin.route('/rss/<url>/<type>')
 def rss(url,type):
     big_list_view = True
@@ -89,6 +99,11 @@ def watchlist(url,type):
         return list_titles(imdb_titles,type)
 
 def list_titles(imdb_titles,list_type):
+    if plugin.get_setting('export') == 'true':
+        try: xbmcvfs.mkdirs('special://profile/addon_data/plugin.video.imdb.watchlists/Movies')
+        except: pass
+        try: xbmcvfs.mkdirs('special://profile/addon_data/plugin.video.imdb.watchlists/TV')
+        except: pass
     items = []
     for imdb_title in imdb_titles:
         imdb_data = imdb_titles[imdb_title]
@@ -150,10 +165,10 @@ def list_titles(imdb_titles,list_type):
         except:
             pass
 
-        if type == "series" or type == "episode":
-            meta_url = "plugin://plugin.video.meta/tv/search_term/%s/1" % urllib.quote_plus(title.encode("utf8"))
+        if type == "series" or type == "episode": #TODO episode
+            meta_url = "plugin://plugin.video.imdb.watchlists/meta_tvdb/%s/%s" % (imdb_title,urllib.quote_plus(title.encode("utf8")))
         else:
-            meta_url = 'plugin://plugin.video.meta/movies/play/imdb/%s/select' % imdb_title
+            meta_url = 'plugin://plugin.video.meta/movies/play/imdb/%s/library' % imdb_title
         context_items = []
         try:
             if type == 'featureFilm' and xbmcaddon.Addon('plugin.video.couchpotato_manager'):
@@ -193,9 +208,34 @@ def list_titles(imdb_titles,list_type):
                 items.append(item)
         else:
             items.append(item)
+
+        if plugin.get_setting('export') == 'true':
+            if type == "series" or type == "episode":
+                folder = "TV"
+            else:
+                folder = "Movies"
+            f = xbmcvfs.File('special://profile/addon_data/plugin.video.imdb.watchlists/%s/%s.strm' % (folder,imdb_title), "wb")
+
+            f.write(meta_url.encode("utf8"))
+            f.close()
+            f = xbmcvfs.File('special://profile/addon_data/plugin.video.imdb.watchlists/%s/%s.nfo' % (folder,imdb_title), "wb")
+            str = "http://www.imdb.com/title/%s/" % imdb_title
+            f.write(str.encode("utf8"))
+            f.close()
+
+
     plugin.add_sort_method(xbmcplugin.SORT_METHOD_UNSORTED)
     plugin.add_sort_method(xbmcplugin.SORT_METHOD_TITLE)
     return items
+
+@plugin.route('/meta_tvdb/<imdb_id>/<title>')
+def meta_tvdb(imdb_id,title):
+    tvdb_id = get_tvdb_id(imdb_id)
+    meta_url = "plugin://plugin.video.meta/tv/tvdb/%s" % tvdb_id
+
+    item ={'label':title, 'path':meta_url, 'thumbnail': get_icon_path('meta')}
+    #TODO launch into Meta seasons view
+    return [item]
 
 @plugin.route('/add_watchlist')
 def add_watchlist():

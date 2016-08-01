@@ -2,4 +2,7 @@
 <category label="Display">
 <setting id="english" label="English Titles" type="bool" default="false" />
 </category>
+<category label="Export">
+<setting id="export" label="Export to strm files every time" type="bool" default="false" />
+</category>
 </settings>
