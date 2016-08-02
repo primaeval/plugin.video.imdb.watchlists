@@ -218,6 +218,7 @@ def list_titles(imdb_titles,list_type,export):
                 folder = "TV"
                 try: xbmcvfs.mkdirs('special://profile/addon_data/plugin.video.imdb.watchlists/TV/%s' % imdb_title)
                 except: pass
+                update_tv_series(imdb_title)
             else:
                 folder = "Movies"
                 f = xbmcvfs.File('special://profile/addon_data/plugin.video.imdb.watchlists/%s/%s.strm' % (folder,imdb_title), "wb")
@@ -247,42 +248,44 @@ def update_tv():
     root = 'special://profile/addon_data/plugin.video.imdb.watchlists/TV'
     dirs, files = xbmcvfs.listdir(root)
     for imdb_id in dirs:
-        tvdb_id = get_tvdb_id(imdb_id)
-        meta_url = "plugin://plugin.video.meta/tv/tvdb/%s" % tvdb_id
-        f = xbmcvfs.File('special://profile/addon_data/plugin.video.imdb.watchlists/TV/%s/tvshow.nfo' % imdb_id,"wb")
-        str = "http://thetvdb.com/index.php?tab=series&id=%s" % tvdb_id
-        f.write(str.encode("utf8"))
-        f.close()
-        url = 'http://thetvdb.com/api/77DDC569F4547C45/series/%s/all/en.zip' % tvdb_id
-        results = requests.get(url)
-        data = results.content
-        try:
-            zip = zipfile.ZipFile(StringIO.StringIO(data))
-            z = zip.open('en.xml')
-            xml = z.read()
-        except:
-            continue
-        match = re.compile(
-            '<Episode>.*?<id>(.*?)</id>.*?<EpisodeNumber>(.*?)</EpisodeNumber>.*?<FirstAired>(.*?)</FirstAired>.*?<SeasonNumber>(.*?)</SeasonNumber>.*?</Episode>',
-            flags=(re.DOTALL | re.MULTILINE)
-            ).findall(xml)
-        for id,episode,aired,season in match:
-            if aired:
-                match = re.search(r'([0-9]*?)-([0-9]*?)-([0-9]*)',aired)
-                if match:
-                    year = match.group(1)
-                    month = match.group(2)
-                    day = match.group(3)
-                    log((year,month,day))
-                    aired = datetime(year=int(year), month=int(month), day=int(day))
-                    today = datetime.today()
-                    if aired <= today:
-                        f = xbmcvfs.File('special://profile/addon_data/plugin.video.imdb.watchlists/TV/%s/S%02dE%02d.strm' % (imdb_id,int(season),int(episode)),"wb")
-                        str = "plugin://plugin.video.meta/tv/play/%s/%d/%d/library" % (tvdb_id,int(season),int(episode))
-                        f.write(str.encode("utf8"))
-                        f.close()
-
+        update_tv_series(imdb_id)
     xbmc.executebuiltin('UpdateLibrary(video)')
+
+def update_tv_series(imdb_id):
+    tvdb_id = get_tvdb_id(imdb_id)
+    meta_url = "plugin://plugin.video.meta/tv/tvdb/%s" % tvdb_id
+    f = xbmcvfs.File('special://profile/addon_data/plugin.video.imdb.watchlists/TV/%s/tvshow.nfo' % imdb_id,"wb")
+    str = "http://thetvdb.com/index.php?tab=series&id=%s" % tvdb_id
+    f.write(str.encode("utf8"))
+    f.close()
+    url = 'http://thetvdb.com/api/77DDC569F4547C45/series/%s/all/en.zip' % tvdb_id
+    results = requests.get(url)
+    data = results.content
+    try:
+        zip = zipfile.ZipFile(StringIO.StringIO(data))
+        z = zip.open('en.xml')
+        xml = z.read()
+    except:
+        return
+    match = re.compile(
+        '<Episode>.*?<id>(.*?)</id>.*?<EpisodeNumber>(.*?)</EpisodeNumber>.*?<FirstAired>(.*?)</FirstAired>.*?<SeasonNumber>(.*?)</SeasonNumber>.*?</Episode>',
+        flags=(re.DOTALL | re.MULTILINE)
+        ).findall(xml)
+    for id,episode,aired,season in match:
+        if aired:
+            match = re.search(r'([0-9]*?)-([0-9]*?)-([0-9]*)',aired)
+            if match:
+                year = match.group(1)
+                month = match.group(2)
+                day = match.group(3)
+                log((year,month,day))
+                aired = datetime(year=int(year), month=int(month), day=int(day))
+                today = datetime.today()
+                if aired <= today:
+                    f = xbmcvfs.File('special://profile/addon_data/plugin.video.imdb.watchlists/TV/%s/S%02dE%02d.strm' % (imdb_id,int(season),int(episode)),"wb")
+                    str = "plugin://plugin.video.meta/tv/play/%s/%d/%d/library" % (tvdb_id,int(season),int(episode))
+                    f.write(str.encode("utf8"))
+                    f.close()
 
 @plugin.route('/nuke')
 def nuke():
