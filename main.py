@@ -229,6 +229,8 @@ def list_titles(imdb_titles,list_type,export):
                 f.write(str.encode("utf8"))
                 f.close()
 
+    if export == "True" and plugin.get_setting('update') == 'true':
+        xbmc.executebuiltin('UpdateLibrary(video)')
 
     plugin.add_sort_method(xbmcplugin.SORT_METHOD_UNSORTED)
     plugin.add_sort_method(xbmcplugin.SORT_METHOD_TITLE)
@@ -358,6 +360,20 @@ def category(type):
         'path': plugin.url_for('remove_watchlist'),
         'thumbnail':get_icon_path('settings'),
     })
+    if type != "movies":
+        items.append(
+        {
+            'label': "Update TV Shows",
+            'path': plugin.url_for('update_tv'),
+            'thumbnail':get_icon_path('settings'),
+        })
+    items.append(
+    {
+        'label': "Delete and Clean Library",
+        'path': plugin.url_for('nuke'),
+        'thumbnail':get_icon_path('settings'),
+    })
+
     return items
 
 @plugin.route('/')
@@ -395,19 +411,19 @@ def index():
         'path': plugin.url_for('remove_watchlist'),
         'thumbnail':get_icon_path('settings'),
     })
-    if plugin.get_setting('export') == 'true':
-        items.append(
-        {
-            'label': "Update TV Shows",
-            'path': plugin.url_for('update_tv'),
-            'thumbnail':get_icon_path('settings'),
-        })
-        items.append(
-        {
-            'label': "Delete and Clean Library",
-            'path': plugin.url_for('nuke'),
-            'thumbnail':get_icon_path('settings'),
-        })
+
+    items.append(
+    {
+        'label': "Update TV Shows",
+        'path': plugin.url_for('update_tv'),
+        'thumbnail':get_icon_path('settings'),
+    })
+    items.append(
+    {
+        'label': "Delete and Clean Library",
+        'path': plugin.url_for('nuke'),
+        'thumbnail':get_icon_path('settings'),
+    })
     return items
 
 if __name__ == '__main__':
