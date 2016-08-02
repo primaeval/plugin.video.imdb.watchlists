@@ -104,10 +104,8 @@ def watchlist(url,type,export):
 
 def list_titles(imdb_titles,list_type,export):
     if export == "True":
-        try: xbmcvfs.mkdirs('special://profile/addon_data/plugin.video.imdb.watchlists/Movies')
-        except: pass
-        try: xbmcvfs.mkdirs('special://profile/addon_data/plugin.video.imdb.watchlists/TV')
-        except: pass
+        xbmcvfs.mkdirs('special://profile/addon_data/plugin.video.imdb.watchlists/Movies')
+        xbmcvfs.mkdirs('special://profile/addon_data/plugin.video.imdb.watchlists/TV')
     items = []
     for imdb_title in imdb_titles:
         imdb_data = imdb_titles[imdb_title]
@@ -174,6 +172,8 @@ def list_titles(imdb_titles,list_type,export):
         elif type == "featureFilm":
             meta_url = 'plugin://plugin.video.meta/movies/play/imdb/%s/library' % imdb_title
         context_items = []
+        context_items.append(
+        ('Add to Library', 'XBMC.RunPlugin(%s)' % (plugin.url_for('export', imdb_id=imdb_title, type=type))))
         try:
             if type == 'featureFilm' and xbmcaddon.Addon('plugin.video.couchpotato_manager'):
                 context_items.append(
@@ -214,20 +214,7 @@ def list_titles(imdb_titles,list_type,export):
             items.append(item)
 
         if export == "True":
-            if type == "series":
-                folder = "TV"
-                try: xbmcvfs.mkdirs('special://profile/addon_data/plugin.video.imdb.watchlists/TV/%s' % imdb_title)
-                except: pass
-                update_tv_series(imdb_title)
-            else:
-                folder = "Movies"
-                f = xbmcvfs.File('special://profile/addon_data/plugin.video.imdb.watchlists/%s/%s.strm' % (folder,imdb_title), "wb")
-                f.write(meta_url.encode("utf8"))
-                f.close()
-                f = xbmcvfs.File('special://profile/addon_data/plugin.video.imdb.watchlists/%s/%s.nfo' % (folder,imdb_title), "wb")
-                str = "http://www.imdb.com/title/%s/" % imdb_title
-                f.write(str.encode("utf8"))
-                f.close()
+            export(imdb_title,type)
 
     if export == "True" and plugin.get_setting('update') == 'true':
         xbmc.executebuiltin('UpdateLibrary(video)')
@@ -235,6 +222,26 @@ def list_titles(imdb_titles,list_type,export):
     plugin.add_sort_method(xbmcplugin.SORT_METHOD_UNSORTED)
     plugin.add_sort_method(xbmcplugin.SORT_METHOD_TITLE)
     return items
+
+
+@plugin.route('/export/<imdb_id>/<type>')
+def export(imdb_id,type):
+    xbmcvfs.mkdirs('special://profile/addon_data/plugin.video.imdb.watchlists/Movies')
+    xbmcvfs.mkdirs('special://profile/addon_data/plugin.video.imdb.watchlists/TV')
+    if type == "series":
+        try: xbmcvfs.mkdirs('special://profile/addon_data/plugin.video.imdb.watchlists/TV/%s' % imdb_id)
+        except: pass
+        update_tv_series(imdb_id)
+    else:
+        f = xbmcvfs.File('special://profile/addon_data/plugin.video.imdb.watchlists/Movies/%s.strm' % (imdb_id), "wb")
+        meta_url = 'plugin://plugin.video.meta/movies/play/imdb/%s/library' % imdb_id
+        f.write(meta_url.encode("utf8"))
+        f.close()
+        f = xbmcvfs.File('special://profile/addon_data/plugin.video.imdb.watchlists/Movies/%s.nfo' % (imdb_id), "wb")
+        str = "http://www.imdb.com/title/%s/" % imdb_id
+        f.write(str.encode("utf8"))
+        f.close()
+
 
 @plugin.route('/meta_tvdb/<imdb_id>/<title>')
 def meta_tvdb(imdb_id,title):
