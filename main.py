@@ -76,7 +76,6 @@ def rss(url,type,export):
 
 @plugin.route('/watchlist/<url>/<type>/<export>')
 def watchlist(url,type,export):
-    log((url,type,export))
     big_list_view = True
     r = requests.get(url, headers=headers)
     html = r.text
@@ -103,6 +102,11 @@ def watchlist(url,type,export):
         return list_titles(imdb_ids,type,export)
 
 def list_titles(imdb_ids,list_type,export):
+    main_context_items = []
+    main_context_items.append(('Update Video Library', 'UpdateLibrary(video)'))
+    main_context_items.append(('Update TV Shows', 'XBMC.RunPlugin(%s)' % (plugin.url_for('update_tv'))))
+    main_context_items.append(('Delete and Clean Library', 'XBMC.RunPlugin(%s)' % (plugin.url_for('nuke'))))
+
     if export == "True":
         xbmcvfs.mkdirs('special://profile/addon_data/plugin.video.imdb.watchlists/Movies')
         xbmcvfs.mkdirs('special://profile/addon_data/plugin.video.imdb.watchlists/TV')
@@ -194,6 +198,7 @@ def list_titles(imdb_ids,list_type,export):
         except:
             pass
         '''
+        context_items = context_items + main_context_items
         item = {
             'label': title,
             'path': meta_url,
@@ -287,7 +292,6 @@ def update_tv_series(imdb_id):
                 year = match.group(1)
                 month = match.group(2)
                 day = match.group(3)
-                log((year,month,day))
                 aired = datetime(year=int(year), month=int(month), day=int(day))
                 today = datetime.today()
                 if aired <= today:
@@ -298,6 +302,10 @@ def update_tv_series(imdb_id):
 
 @plugin.route('/nuke')
 def nuke():
+    dialog = xbmcgui.Dialog()
+    ok = dialog.ok('Delete Library', 'Are you sure?')
+    if not ok:
+        return
     for root in ['special://profile/addon_data/plugin.video.imdb.watchlists/TV','special://profile/addon_data/plugin.video.imdb.watchlists/Movies']:
         root_dirs, root_files = xbmcvfs.listdir(root)
         for root_dir in root_dirs:
@@ -320,18 +328,28 @@ def add_watchlist():
             watchlists = plugin.get_storage('watchlists')
             watchlists[name] = url
 
-@plugin.route('/remove_watchlist')
-def remove_watchlist():
+@plugin.route('/remove_watchlist_dialog/')
+def remove_watchlist_dialog():
     watchlists = plugin.get_storage('watchlists')
     names = sorted([w for w in watchlists])
     dialog = xbmcgui.Dialog()
     index = dialog.select('Select Watchlist to Remove', names)
     if index >= 0:
         name = names[index]
-        del watchlists[name]
+        remove_watchlist(name)
+
+@plugin.route('/remove_watchlist/<watchlist>')
+def remove_watchlist(watchlist):
+    watchlists = plugin.get_storage('watchlists')
+    del watchlists[watchlist]
 
 @plugin.route('/category/<type>')
 def category(type):
+    main_context_items = []
+    main_context_items.append(('Add Watchlist', 'XBMC.RunPlugin(%s)' % (plugin.url_for('add_watchlist'))))
+    #main_context_items.append(('Remove Watchlist', 'XBMC.RunPlugin(%s)' % (plugin.url_for('remove_watchlist'))))
+    main_context_items.append(('Update TV Shows', 'XBMC.RunPlugin(%s)' % (plugin.url_for('update_tv'))))
+    main_context_items.append(('Delete and Clean Library', 'XBMC.RunPlugin(%s)' % (plugin.url_for('nuke'))))
     if type == "all":
         icon = "favourites"
     elif type == "movies":
@@ -348,6 +366,8 @@ def category(type):
         context_items = []
         context_items.append(
         ('Add to Library', 'XBMC.RunPlugin(%s)' % (plugin.url_for(route, url=watchlists[watchlist], type=type, export=True))))
+        context_items.append(('Remove Watchlist', 'XBMC.RunPlugin(%s)' % (plugin.url_for('remove_watchlist', watchlist=watchlist))))
+        context_items = context_items + main_context_items
         items.append(
         {
             'label': watchlist,
@@ -355,82 +375,40 @@ def category(type):
             'thumbnail':get_icon_path(icon),
             'context_menu': context_items,
         })
-    items.append(
-    {
-        'label': "Add Watchlist",
-        'path': plugin.url_for('add_watchlist'),
-        'thumbnail':get_icon_path('settings'),
-    })
-    items.append(
-    {
-        'label': "Remove Watchlist",
-        'path': plugin.url_for('remove_watchlist'),
-        'thumbnail':get_icon_path('settings'),
-    })
-    if type != "movies":
-        items.append(
-        {
-            'label': "Update TV Shows",
-            'path': plugin.url_for('update_tv'),
-            'thumbnail':get_icon_path('settings'),
-        })
-    items.append(
-    {
-        'label': "Delete and Clean Library",
-        'path': plugin.url_for('nuke'),
-        'thumbnail':get_icon_path('settings'),
-    })
+
 
     return items
 
 @plugin.route('/')
 def index():
-
+    context_items = []
+    context_items.append(('Add Watchlist', 'XBMC.RunPlugin(%s)' % (plugin.url_for('add_watchlist'))))
+    context_items.append(('Remove Watchlist', 'XBMC.RunPlugin(%s)' % (plugin.url_for('remove_watchlist_dialog'))))
+    context_items.append(('Update TV Shows', 'XBMC.RunPlugin(%s)' % (plugin.url_for('update_tv'))))
+    context_items.append(('Delete and Clean Library', 'XBMC.RunPlugin(%s)' % (plugin.url_for('nuke'))))
     items = []
     items.append(
     {
         'label': "All",
         'path': plugin.url_for('category', type="all"),
         'thumbnail':get_icon_path('favourites'),
+        'context_menu': context_items,
     })
     items.append(
     {
         'label': "Movies",
         'path': plugin.url_for('category', type="movies"),
         'thumbnail':get_icon_path('movies'),
+        'context_menu': context_items,
     })
     items.append(
     {
         'label': "TV",
         'path': plugin.url_for('category', type="tv"),
         'thumbnail':get_icon_path('tv'),
+        'context_menu': context_items,
     })
 
-    items.append(
-    {
-        'label': "Add Watchlist",
-        'path': plugin.url_for('add_watchlist'),
-        'thumbnail':get_icon_path('settings'),
-    })
-    items.append(
-    {
-        'label': "Remove Watchlist",
-        'path': plugin.url_for('remove_watchlist'),
-        'thumbnail':get_icon_path('settings'),
-    })
-
-    items.append(
-    {
-        'label': "Update TV Shows",
-        'path': plugin.url_for('update_tv'),
-        'thumbnail':get_icon_path('settings'),
-    })
-    items.append(
-    {
-        'label': "Delete and Clean Library",
-        'path': plugin.url_for('nuke'),
-        'thumbnail':get_icon_path('settings'),
-    })
     return items
 
 if __name__ == '__main__':
