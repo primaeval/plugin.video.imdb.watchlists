@@ -3,6 +3,6 @@
 <setting id="english" label="English Titles" type="bool" default="false" />
 </category>
 <category label="Lab">
-<setting id="update" label="Update Library after Add" type="bool" default="false" />
+<setting id="update" label="Update Library after Add Watchlist to Libary" type="bool" default="false" />
 </category>
 </settings>

@@ -68,11 +68,11 @@ def rss(url,type,export):
 
     import json
     imdb = json.loads(html)
-    imdb_titles = {}
-    for imdb_title in imdb:
-       imdb_titles[imdb_title] = imdb[imdb_title]['title']
+    imdb_ids = {}
+    for imdb_id in imdb:
+       imdb_ids[imdb_id] = imdb[imdb_id]['title']
 
-    return list_titles(imdb_titles,type,export)
+    return list_titles(imdb_ids,type,export)
 
 @plugin.route('/watchlist/<url>/<type>/<export>')
 def watchlist(url,type,export):
@@ -88,9 +88,9 @@ def watchlist(url,type,export):
         imdb = json.loads(data)
         imdb_list = imdb['list']
         imdb_items = imdb_list['items']
-        imdb_titles = imdb['titles']
+        imdb_ids = imdb['titles']
         all = [i['const'] for i in imdb_items]
-        got = [i for i in imdb_titles]
+        got = [i for i in imdb_ids]
         missing = set(all) - set(got)
         if missing:
             ids = list(missing)
@@ -98,17 +98,17 @@ def watchlist(url,type,export):
             r = requests.get(url, headers=headers)
             html = r.text
             imdb = json.loads(html)
-            for imdb_title in imdb:
-               imdb_titles[imdb_title] = imdb[imdb_title]['title']
-        return list_titles(imdb_titles,type,export)
+            for imdb_id in imdb:
+               imdb_ids[imdb_id] = imdb[imdb_id]['title']
+        return list_titles(imdb_ids,type,export)
 
-def list_titles(imdb_titles,list_type,export):
+def list_titles(imdb_ids,list_type,export):
     if export == "True":
         xbmcvfs.mkdirs('special://profile/addon_data/plugin.video.imdb.watchlists/Movies')
         xbmcvfs.mkdirs('special://profile/addon_data/plugin.video.imdb.watchlists/TV')
     items = []
-    for imdb_title in imdb_titles:
-        imdb_data = imdb_titles[imdb_title]
+    for imdb_id in imdb_ids:
+        imdb_data = imdb_ids[imdb_id]
         title = '-'
         year = ''
         try:
@@ -168,16 +168,16 @@ def list_titles(imdb_titles,list_type,export):
             pass
 
         if type == "series": #TODO episode
-            meta_url = "plugin://plugin.video.imdb.watchlists/meta_tvdb/%s/%s" % (imdb_title,urllib.quote_plus(title.encode("utf8")))
+            meta_url = "plugin://plugin.video.imdb.watchlists/meta_tvdb/%s/%s" % (imdb_id,urllib.quote_plus(title.encode("utf8")))
         elif type == "featureFilm":
-            meta_url = 'plugin://plugin.video.meta/movies/play/imdb/%s/library' % imdb_title
+            meta_url = 'plugin://plugin.video.meta/movies/play/imdb/%s/library' % imdb_id
         context_items = []
         context_items.append(
-        ('Add to Library', 'XBMC.RunPlugin(%s)' % (plugin.url_for('export', imdb_id=imdb_title, type=type))))
+        ('Add to Library', 'XBMC.RunPlugin(%s)' % (plugin.url_for('add_to_library', imdb_id=imdb_id, type=type))))
         try:
             if type == 'featureFilm' and xbmcaddon.Addon('plugin.video.couchpotato_manager'):
                 context_items.append(
-                ('Add to Couch Potato', "XBMC.RunPlugin(plugin://plugin.video.couchpotato_manager/movies/add-by-id/%s)" % (imdb_title)))
+                ('Add to Couch Potato', "XBMC.RunPlugin(plugin://plugin.video.couchpotato_manager/movies/add-by-id/%s)" % (imdb_id)))
         except:
             pass
         try:
@@ -198,7 +198,7 @@ def list_titles(imdb_titles,list_type,export):
             'label': title,
             'path': meta_url,
             'thumbnail': thumbnail,
-            'info': {'title': title, 'genre': ','.join(genres),'code': imdb_title,
+            'info': {'title': title, 'genre': ','.join(genres),'code': imdb_id,
             'year':year,'rating':rating,'plot': plot,
             'mpaa': certificate,'cast': cast,'duration': runtime, 'votes': votes},
             'context_menu': context_items,
@@ -214,7 +214,7 @@ def list_titles(imdb_titles,list_type,export):
             items.append(item)
 
         if export == "True":
-            export(imdb_title,type)
+            add_to_library(imdb_id, type)
 
     if export == "True" and plugin.get_setting('update') == 'true':
         xbmc.executebuiltin('UpdateLibrary(video)')
@@ -224,8 +224,8 @@ def list_titles(imdb_titles,list_type,export):
     return items
 
 
-@plugin.route('/export/<imdb_id>/<type>')
-def export(imdb_id,type):
+@plugin.route('/add_to_library/<imdb_id>/<type>')
+def add_to_library(imdb_id,type):
     xbmcvfs.mkdirs('special://profile/addon_data/plugin.video.imdb.watchlists/Movies')
     xbmcvfs.mkdirs('special://profile/addon_data/plugin.video.imdb.watchlists/TV')
     if type == "series":
