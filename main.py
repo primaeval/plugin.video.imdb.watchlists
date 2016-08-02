@@ -16,10 +16,11 @@ import os
 #import shutil
 #from rpc import RPC
 from types import *
-#import sys
-#xbmc.log(repr(sys.argv))
 import zipfile
 import StringIO
+
+import sys
+#xbmc.log(repr(sys.argv))
 
 plugin = Plugin()
 
@@ -48,8 +49,8 @@ def get_tvdb_id(imdb_id):
         tvdb_id = tvdb_match.group(1)
     return tvdb_id
 
-@plugin.route('/rss/<url>/<type>')
-def rss(url,type):
+@plugin.route('/rss/<url>/<type>/<export>')
+def rss(url,type,export):
     big_list_view = True
     r = requests.get(url, headers=headers)
     html = r.text
@@ -71,10 +72,11 @@ def rss(url,type):
     for imdb_title in imdb:
        imdb_titles[imdb_title] = imdb[imdb_title]['title']
 
-    return list_titles(imdb_titles,type)
+    return list_titles(imdb_titles,type,export)
 
-@plugin.route('/watchlist/<url>/<type>')
-def watchlist(url,type):
+@plugin.route('/watchlist/<url>/<type>/<export>')
+def watchlist(url,type,export):
+    log((url,type,export))
     big_list_view = True
     r = requests.get(url, headers=headers)
     html = r.text
@@ -98,10 +100,10 @@ def watchlist(url,type):
             imdb = json.loads(html)
             for imdb_title in imdb:
                imdb_titles[imdb_title] = imdb[imdb_title]['title']
-        return list_titles(imdb_titles,type)
+        return list_titles(imdb_titles,type,export)
 
-def list_titles(imdb_titles,list_type):
-    if plugin.get_setting('export') == 'true':
+def list_titles(imdb_titles,list_type,export):
+    if export == "True":
         try: xbmcvfs.mkdirs('special://profile/addon_data/plugin.video.imdb.watchlists/Movies')
         except: pass
         try: xbmcvfs.mkdirs('special://profile/addon_data/plugin.video.imdb.watchlists/TV')
@@ -211,7 +213,7 @@ def list_titles(imdb_titles,list_type):
         else:
             items.append(item)
 
-        if plugin.get_setting('export') == 'true':
+        if export == "True":
             if type == "series":
                 folder = "TV"
                 try: xbmcvfs.mkdirs('special://profile/addon_data/plugin.video.imdb.watchlists/TV/%s' % imdb_title)
@@ -331,11 +333,15 @@ def category(type):
             route = 'rss'
         else:
             route = 'watchlist'
+        context_items = []
+        context_items.append(
+        ('Add to Library', 'XBMC.RunPlugin(%s)' % (plugin.url_for(route, url=watchlists[watchlist], type=type, export=True))))
         items.append(
         {
             'label': watchlist,
-            'path': plugin.url_for(route, url=watchlists[watchlist], type=type),
+            'path': plugin.url_for(route, url=watchlists[watchlist], type=type, export=False),
             'thumbnail':get_icon_path(icon),
+            'context_menu': context_items,
         })
     items.append(
     {
