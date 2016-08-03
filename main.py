@@ -105,8 +105,8 @@ def list_titles(imdb_ids,list_type,export):
     main_context_items = []
     main_context_items.append(('Update Video Library', 'UpdateLibrary(video)'))
     main_context_items.append(('Update TV Shows', 'XBMC.RunPlugin(%s)' % (plugin.url_for('update_tv'))))
-    main_context_items.append(('Delete and Clean Library', 'XBMC.RunPlugin(%s)' % (plugin.url_for('nuke'))))
-
+    main_context_items.append(('Delete Library', 'XBMC.RunPlugin(%s)' % (plugin.url_for('nuke'))))
+    main_context_items.append(('Clean Video Library', 'CleanLibrary(video)'))
     if export == "True":
         xbmcvfs.mkdirs('special://profile/addon_data/plugin.video.imdb.watchlists/Movies')
         xbmcvfs.mkdirs('special://profile/addon_data/plugin.video.imdb.watchlists/TV')
@@ -178,6 +178,8 @@ def list_titles(imdb_ids,list_type,export):
         context_items = []
         context_items.append(
         ('Add to Library', 'XBMC.RunPlugin(%s)' % (plugin.url_for('add_to_library', imdb_id=imdb_id, type=type))))
+        context_items.append(
+        ('Delete from Library', 'XBMC.RunPlugin(%s)' % (plugin.url_for('delete_from_library', imdb_id=imdb_id, type=type))))
         try:
             if type == 'featureFilm' and xbmcaddon.Addon('plugin.video.couchpotato_manager'):
                 context_items.append(
@@ -246,6 +248,20 @@ def add_to_library(imdb_id,type):
         f.write(str.encode("utf8"))
         f.close()
 
+@plugin.route('/delete_from_library/<imdb_id>/<type>')
+def delete_from_library(imdb_id,type):
+    if type == "series":
+        tv_dir = 'special://profile/addon_data/plugin.video.imdb.watchlists/TV/%s' % imdb_id
+        dirs, files = xbmcvfs.listdir(tv_dir)
+        for file in files:
+            xbmcvfs.delete("%s/%s" % (tv_dir,file))
+        xbmcvfs.rmdir(dir)
+    else:
+        f = 'special://profile/addon_data/plugin.video.imdb.watchlists/Movies/%s.strm' % (imdb_id)
+        log(f)
+        xbmcvfs.delete(f)
+        f = 'special://profile/addon_data/plugin.video.imdb.watchlists/Movies/%s.nfo' % (imdb_id)
+        xbmcvfs.delete(f)
 
 @plugin.route('/meta_tvdb/<imdb_id>/<title>')
 def meta_tvdb(imdb_id,title):
@@ -315,7 +331,7 @@ def nuke():
             xbmcvfs.rmdir(dir)
         for file in root_files:
             xbmcvfs.delete("%s/%s" % (root,file))
-    xbmc.executebuiltin('CleanLibrary(video)')
+    #xbmc.executebuiltin('CleanLibrary(video)')
 
 @plugin.route('/add_watchlist')
 def add_watchlist():
@@ -350,7 +366,8 @@ def category(type):
     main_context_items.append(('Add Watchlist', 'XBMC.RunPlugin(%s)' % (plugin.url_for('add_watchlist'))))
     #main_context_items.append(('Remove Watchlist', 'XBMC.RunPlugin(%s)' % (plugin.url_for('remove_watchlist'))))
     main_context_items.append(('Update TV Shows', 'XBMC.RunPlugin(%s)' % (plugin.url_for('update_tv'))))
-    main_context_items.append(('Delete and Clean Library', 'XBMC.RunPlugin(%s)' % (plugin.url_for('nuke'))))
+    main_context_items.append(('Delete Library', 'XBMC.RunPlugin(%s)' % (plugin.url_for('nuke'))))
+    main_context_items.append(('Clean Video Library', 'CleanLibrary(video)'))
     if type == "all":
         icon = "favourites"
     elif type == "movies":
@@ -386,7 +403,8 @@ def index():
     context_items.append(('Add Watchlist', 'XBMC.RunPlugin(%s)' % (plugin.url_for('add_watchlist'))))
     context_items.append(('Remove Watchlist', 'XBMC.RunPlugin(%s)' % (plugin.url_for('remove_watchlist_dialog'))))
     context_items.append(('Update TV Shows', 'XBMC.RunPlugin(%s)' % (plugin.url_for('update_tv'))))
-    context_items.append(('Delete and Clean Library', 'XBMC.RunPlugin(%s)' % (plugin.url_for('nuke'))))
+    context_items.append(('Delete Library', 'XBMC.RunPlugin(%s)' % (plugin.url_for('nuke'))))
+    context_items.append(('Clean Video Library', 'CleanLibrary(video)'))
     items = []
     items.append(
     {
