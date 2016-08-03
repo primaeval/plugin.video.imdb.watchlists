@@ -1,3 +1,10 @@
+Version 0.0.9
+- iSearch
+- urls can be ur12345678
+- tv show update timer
+- delete from library command
+- seperate delete and clean library commands
+
 Version 0.0.8
 - add individual items to library
 - context menu commands

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addon id="plugin.video.imdb.watchlists"
-version="0.0.8"
+version="0.0.9"
 name="IMDb Watchlists"
 provider-name="primaeval">
 <requires>
@@ -18,4 +18,3 @@ provider-name="primaeval">
   <disclaimer lang="en">.</disclaimer>
 </extension>
 </addon>
-
