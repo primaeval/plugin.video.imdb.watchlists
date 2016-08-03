@@ -4,5 +4,9 @@
 </category>
 <category label="Lab">
 <setting id="update" label="Update Library after Add Watchlist to Libary" type="bool" default="false" />
+<setting type="sep"/>
+<setting id="subscription_update" type="bool" label="Update TV Shows Timer" default="true"/>
+<setting id="subscription_timer" type="enum" values="2h|5h|10h|15h|24h" label="Update Frequency" default="2"/>
+<setting id="service_time" type="text" label="Service Time" default="2000-01-01 00:00:00" visible="false"/>
 </category>
 </settings>
