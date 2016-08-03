@@ -326,6 +326,8 @@ def add_watchlist():
         name = dialog.input('Enter Watchlist Name', type=xbmcgui.INPUT_ALPHANUM)
         if name:
             watchlists = plugin.get_storage('watchlists')
+            if url.startswith('ur'):
+                url = "http://www.imdb.com/user/%s/watchlist" % url
             watchlists[name] = url
 
 @plugin.route('/remove_watchlist_dialog/')
