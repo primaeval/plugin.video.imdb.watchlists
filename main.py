@@ -190,14 +190,13 @@ def list_titles(imdb_ids,list_type,export):
                 ('Add to Sickrage', "XBMC.RunPlugin(plugin://plugin.video.sickrage?action=addshow&&show_name=%s)" % (urllib.quote_plus(title.encode("utf8")))))
         except:
             pass
-        ''' #TODO
         try:
             if xbmcaddon.Addon('plugin.program.super.favourites'):
                 context_items.append(
-                ('iSearch', "XBMC.RunPlugin(plugin://plugin.program.super.favourites?mode=0&keyword=%s)" % (urllib.quote_plus(title.encode("utf8")))))
+                ('iSearch', 'ActivateWindow(%d,"plugin://%s/?mode=%d&keyword=%s",return)' % (10025,'plugin.program.super.favourites', 0, urllib.quote_plus(title))))
         except:
             pass
-        '''
+
         context_items = context_items + main_context_items
         item = {
             'label': title,
