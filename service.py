@@ -11,7 +11,13 @@ def subscription_update():
         return True
     else:
         return False
-        
+
+def update_watchlists():
+    if ADDON.getSetting('update_watchlists') == "true":
+        return True
+    else:
+        return False
+
 def subscription_timer():
     return int(ADDON.getSetting('subscription_timer'))
 
@@ -31,10 +37,13 @@ class AutoUpdater:
                             if xbmc.getCondVisibility('Library.IsScanningVideo') == False:
                                 xbmc.log('[IMDb Watchlists] Updating video library')
                                 time.sleep(1)
+                                if update_watchlists():
+                                    xbmc.executebuiltin('RunPlugin(plugin://plugin.video.imdb.watchlists/update_watchlists)')
                                 xbmc.executebuiltin('RunPlugin(plugin://plugin.video.imdb.watchlists/update_tv)')
                                 self.last_run = now
                                 ADDON.setSetting('service_time', str(datetime.datetime.now() + timedelta(hours=hours)).split('.')[0])
                                 xbmc.log("[IMDb Watchlists] Library updated. Next run at " + ADDON.getSetting('service_time'))
+                                xbmc.executebuiltin('UpdateLibrary(video)')
                         else:
                             xbmc.log("[IMDb Watchlists] Player is running, waiting until finished")
                 except:

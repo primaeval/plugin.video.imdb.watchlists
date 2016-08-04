@@ -106,6 +106,7 @@ def list_titles(imdb_ids,list_type,export):
     main_context_items.append(('Update Video Library', 'UpdateLibrary(video)'))
     main_context_items.append(('Update TV Shows', 'XBMC.RunPlugin(%s)' % (plugin.url_for('update_tv'))))
     main_context_items.append(('Delete Library', 'XBMC.RunPlugin(%s)' % (plugin.url_for('nuke'))))
+    main_context_items.append(('Update Video Library', 'UpdateLibrary(video)'))
     main_context_items.append(('Clean Video Library', 'CleanLibrary(video)'))
     if export == "True":
         xbmcvfs.mkdirs('special://profile/addon_data/plugin.video.imdb.watchlists/Movies')
@@ -223,8 +224,8 @@ def list_titles(imdb_ids,list_type,export):
         if export == "True":
             add_to_library(imdb_id, type)
 
-    if export == "True" and plugin.get_setting('update') == 'true':
-        xbmc.executebuiltin('UpdateLibrary(video)')
+    #if export == "True" and plugin.get_setting('update') == 'true':
+    #    xbmc.executebuiltin('UpdateLibrary(video)')
 
     plugin.add_sort_method(xbmcplugin.SORT_METHOD_UNSORTED)
     plugin.add_sort_method(xbmcplugin.SORT_METHOD_TITLE)
@@ -259,7 +260,6 @@ def delete_from_library(imdb_id,type):
         xbmcvfs.rmdir(dir)
     else:
         f = 'special://profile/addon_data/plugin.video.imdb.watchlists/Movies/%s.strm' % (imdb_id)
-        log(f)
         xbmcvfs.delete(f)
         f = 'special://profile/addon_data/plugin.video.imdb.watchlists/Movies/%s.nfo' % (imdb_id)
         xbmcvfs.delete(f)
@@ -275,6 +275,8 @@ def meta_tvdb(imdb_id,title):
 
 @plugin.route('/update_tv')
 def update_tv():
+    xbmcvfs.mkdirs('special://profile/addon_data/plugin.video.imdb.watchlists/Movies')
+    xbmcvfs.mkdirs('special://profile/addon_data/plugin.video.imdb.watchlists/TV')
     last_run  = datetime.fromtimestamp(time.mktime(time.strptime(plugin.get_setting('update_tv_time').encode('utf-8', 'replace'), "%Y-%m-%d %H:%M:%S")))
     now = datetime.now()
     next_day = last_run + timedelta(hours=24)
@@ -314,7 +316,7 @@ def update_tv():
         else:
             if imdb_id in ids:
                 update_tv_series(imdb_id)
-    xbmc.executebuiltin('UpdateLibrary(video)')
+    #xbmc.executebuiltin('UpdateLibrary(video)')
 
 def update_tv_series(imdb_id):
     tvdb_id = get_tvdb_id(imdb_id)
@@ -353,6 +355,8 @@ def update_tv_series(imdb_id):
 
 @plugin.route('/nuke')
 def nuke():
+    xbmcvfs.mkdirs('special://profile/addon_data/plugin.video.imdb.watchlists/Movies')
+    xbmcvfs.mkdirs('special://profile/addon_data/plugin.video.imdb.watchlists/TV')
     dialog = xbmcgui.Dialog()
     ok = dialog.yesno('Delete Library', 'Are you sure?')
     if not ok:
@@ -396,6 +400,20 @@ def remove_watchlist(watchlist):
     watchlists = plugin.get_storage('watchlists')
     del watchlists[watchlist]
 
+
+@plugin.route('/update_watchlists')
+def update_watchlists():
+    xbmcvfs.mkdirs('special://profile/addon_data/plugin.video.imdb.watchlists/Movies')
+    xbmcvfs.mkdirs('special://profile/addon_data/plugin.video.imdb.watchlists/TV')
+    watchlists = plugin.get_storage('watchlists')
+    for w in sorted(watchlists):
+        url = watchlists[w]
+        if 'rss.imdb' in watchlists[w]:
+            rss(url,'all',"True")
+        else:
+            watchlist(url,'all',"True")
+
+
 @plugin.route('/category/<type>')
 def category(type):
     main_context_items = []
@@ -403,6 +421,7 @@ def category(type):
     #main_context_items.append(('Remove Watchlist', 'XBMC.RunPlugin(%s)' % (plugin.url_for('remove_watchlist'))))
     main_context_items.append(('Update TV Shows', 'XBMC.RunPlugin(%s)' % (plugin.url_for('update_tv'))))
     main_context_items.append(('Delete Library', 'XBMC.RunPlugin(%s)' % (plugin.url_for('nuke'))))
+    main_context_items.append(('Update Video Library', 'UpdateLibrary(video)'))
     main_context_items.append(('Clean Video Library', 'CleanLibrary(video)'))
     if type == "all":
         icon = "favourites"
@@ -456,8 +475,20 @@ def maintenance():
     })
     items.append(
     {
+        'label': "Add All Watchlists to Library",
+        'path': plugin.url_for('update_watchlists'),
+        'thumbnail':get_icon_path('settings'),
+    })
+    items.append(
+    {
         'label': "Delete Library",
         'path': plugin.url_for('nuke'),
+        'thumbnail':get_icon_path('settings'),
+    })
+    items.append(
+    {
+        'label': "Update Video Library",
+        'path': 'UpdateLibrary(video)',
         'thumbnail':get_icon_path('settings'),
     })
     items.append(
@@ -475,6 +506,7 @@ def index():
     context_items.append(('Remove Watchlist', 'XBMC.RunPlugin(%s)' % (plugin.url_for('remove_watchlist_dialog'))))
     context_items.append(('Update TV Shows', 'XBMC.RunPlugin(%s)' % (plugin.url_for('update_tv'))))
     context_items.append(('Delete Library', 'XBMC.RunPlugin(%s)' % (plugin.url_for('nuke'))))
+    context_items.append(('Update Video Library', 'UpdateLibrary(video)'))
     context_items.append(('Clean Video Library', 'CleanLibrary(video)'))
     items = []
     items.append(
