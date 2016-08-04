@@ -1,25 +1,19 @@
+from datetime import datetime,timedelta
+from types import *
 from xbmcswift2 import Plugin
 from xbmcswift2 import actions
-import xbmc,xbmcaddon,xbmcvfs,xbmcgui
-import re
 import HTMLParser
+import StringIO
+import json
+import os
+import re
 import requests
-#import random
-from datetime import datetime,timedelta
+import sys
 import time
 import urllib
-#import HTMLParser
+import xbmc,xbmcaddon,xbmcvfs,xbmcgui
 import xbmcplugin
-#import xml.etree.ElementTree as ET
-#import sqlite3
-import os
-#import shutil
-#from rpc import RPC
-from types import *
 import zipfile
-import StringIO
-
-import sys
 #xbmc.log(repr(sys.argv))
 
 plugin = Plugin()
@@ -49,6 +43,54 @@ def get_tvdb_id(imdb_id):
         tvdb_id = tvdb_match.group(1)
     return tvdb_id
 
+@plugin.route('/ls_list/<url>/<type>/<export>')
+def ls_list(url,type,export):
+    big_list_view = True
+    ids = []
+    r = requests.get(url, headers=headers)
+    html = r.text
+    match = re.compile(
+        '<div class="list_item.*?href="/title/(tt.*?)/"',
+        flags=(re.DOTALL | re.MULTILINE)
+        ).findall(html)
+    ids = ids + match
+    new_url = ''
+    match = re.search(
+        '<div class="pagination">(.*?)</div>',
+        html,
+        flags=(re.DOTALL | re.MULTILINE)
+        )
+    if match:
+        match = re.search(
+            '<a href="([^"]*?)">Next&nbsp;&raquo;</a>',
+            match.group(1),
+            flags=(re.DOTALL | re.MULTILINE)
+        )
+        if match:
+            old_url = url.split('?')[0]
+            new_url = "%s%s" % (old_url,match.group(1))
+
+    if not ids:
+        return
+    url = 'http://www.imdb.com/title/data?ids=%s' % ','.join(ids)
+    r = requests.get(url, headers=headers)
+    html = r.text
+
+    imdb = json.loads(html)
+    imdb_ids = {}
+    for imdb_id in imdb:
+       imdb_ids[imdb_id] = imdb[imdb_id]['title']
+    ids.reverse()
+    items = list_titles(imdb_ids,ids,type,export)
+    if new_url:
+        items.append(
+        {
+            'label': "[COLOR orange]Next Page >>[/COLOR]",
+            'path': plugin.url_for(ls_list, url=new_url, type=type, export=export),
+            'thumbnail':get_icon_path('settings'),
+        })
+    return items
+
 @plugin.route('/rss/<url>/<type>/<export>')
 def rss(url,type,export):
     big_list_view = True
@@ -66,7 +108,6 @@ def rss(url,type,export):
     r = requests.get(url, headers=headers)
     html = r.text
 
-    import json
     imdb = json.loads(html)
     imdb_ids = {}
     for imdb_id in imdb:
@@ -83,7 +124,6 @@ def watchlist(url,type,export):
     match = re.search(r'IMDbReactInitialState\.push\(({.*?})\);',html)
     if match:
         data = match.group(1)
-        import json
         imdb = json.loads(data)
         imdb_list = imdb['list']
         imdb_items = imdb_list['items']
@@ -385,7 +425,7 @@ def add_watchlist():
             if url.startswith('ur'):
                 url = "http://www.imdb.com/user/%s/watchlist" % url
             elif url.startswith('ls'):
-                url = "http://rss.imdb.com/list/%s" % url
+                url = "http://www.imdb.com/list/%s" % url
             watchlists[name] = url
 
 @plugin.route('/remove_watchlist_dialog/')
@@ -413,6 +453,8 @@ def update_watchlists():
         url = watchlists[w]
         if 'rss.imdb' in watchlists[w]:
             rss(url,'all',"True")
+        elif 'list/ls' in watchlists[watchlist]:
+            ls_list(url,'all',"True")
         else:
             watchlist(url,'all',"True")
 
@@ -437,6 +479,8 @@ def category(type):
     for watchlist in sorted(watchlists):
         if 'rss.imdb' in watchlists[watchlist]:
             route = 'rss'
+        elif 'list/ls' in watchlists[watchlist]:
+            route = "ls_list"
         else:
             route = 'watchlist'
         context_items = []
