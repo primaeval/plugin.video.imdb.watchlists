@@ -1,3 +1,7 @@
+Version 0.0.11
+- update watchlists timer setting
+- update after add is now manual
+
 Version 0.0.10
 - maintenance menu
 - partial tv show updates
