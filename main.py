@@ -71,8 +71,8 @@ def rss(url,type,export):
     imdb_ids = {}
     for imdb_id in imdb:
        imdb_ids[imdb_id] = imdb[imdb_id]['title']
-
-    return list_titles(imdb_ids,type,export)
+    ids.reverse()
+    return list_titles(imdb_ids,ids,type,export)
 
 @plugin.route('/watchlist/<url>/<type>/<export>')
 def watchlist(url,type,export):
@@ -99,9 +99,10 @@ def watchlist(url,type,export):
             imdb = json.loads(html)
             for imdb_id in imdb:
                imdb_ids[imdb_id] = imdb[imdb_id]['title']
-        return list_titles(imdb_ids,type,export)
+        all.reverse()
+        return list_titles(imdb_ids,all,type,export)
 
-def list_titles(imdb_ids,list_type,export):
+def list_titles(imdb_ids,order,list_type,export):
     main_context_items = []
     main_context_items.append(('Update Video Library', 'UpdateLibrary(video)'))
     main_context_items.append(('Update TV Shows', 'XBMC.RunPlugin(%s)' % (plugin.url_for('update_tv'))))
@@ -112,7 +113,7 @@ def list_titles(imdb_ids,list_type,export):
         xbmcvfs.mkdirs('special://profile/addon_data/plugin.video.imdb.watchlists/Movies')
         xbmcvfs.mkdirs('special://profile/addon_data/plugin.video.imdb.watchlists/TV')
     items = []
-    for imdb_id in imdb_ids:
+    for imdb_id in order:
         imdb_data = imdb_ids[imdb_id]
         title = '-'
         year = ''
