@@ -1,3 +1,7 @@
+Version 0.0.10
+- maintenance menu
+- partial tv show updates
+
 Version 0.0.9
 - iSearch
 - urls can be ur12345678
