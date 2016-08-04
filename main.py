@@ -6,7 +6,7 @@ import HTMLParser
 import requests
 #import random
 from datetime import datetime,timedelta
-#import time
+import time
 import urllib
 #import HTMLParser
 import xbmcplugin
@@ -181,7 +181,7 @@ def list_titles(imdb_ids,list_type,export):
                 context_items.append(
                 ('iSearch', 'ActivateWindow(%d,"plugin://%s/?mode=%d&keyword=%s",return)' % (10025,'plugin.program.super.favourites', 0, urllib.quote_plus(title))))
         except:
-            pass        
+            pass
         context_items.append(
         ('Add to Library', 'XBMC.RunPlugin(%s)' % (plugin.url_for('add_to_library', imdb_id=imdb_id, type=type))))
         context_items.append(
@@ -275,10 +275,45 @@ def meta_tvdb(imdb_id,title):
 
 @plugin.route('/update_tv')
 def update_tv():
+    last_run  = datetime.fromtimestamp(time.mktime(time.strptime(plugin.get_setting('update_tv_time').encode('utf-8', 'replace'), "%Y-%m-%d %H:%M:%S")))
+    now = datetime.now()
+    next_day = last_run + timedelta(hours=24)
+    next_week = last_run + timedelta(days=7)
+    if now > next_week:
+        update_all = True
+        period = "all"
+    elif now > next_day:
+        update_all = False
+        period = "week"
+    else:
+        update_all = False
+        period = "day"
+
+    plugin.set_setting('update_tv_time', str(datetime.now()).split('.')[0])
+
+    if update_all == False:
+        url = 'http://thetvdb.com/api/77DDC569F4547C45/updates/updates_%s.zip' % period
+        results = requests.get(url)
+        data = results.content
+        try:
+            zip = zipfile.ZipFile(StringIO.StringIO(data))
+            z = zip.open('updates_%s.xml'  % period)
+            xml = z.read()
+        except:
+            return
+        match = re.compile(
+        '<Series><id>(.*?)</id><time>(.*?)</time></Series>',
+        flags=(re.DOTALL | re.MULTILINE)
+        ).findall(xml)
+        ids = [id[0] for id in match]
     root = 'special://profile/addon_data/plugin.video.imdb.watchlists/TV'
     dirs, files = xbmcvfs.listdir(root)
     for imdb_id in dirs:
-        update_tv_series(imdb_id)
+        if update_all:
+            update_tv_series(imdb_id)
+        else:
+            if imdb_id in ids:
+                update_tv_series(imdb_id)
     xbmc.executebuiltin('UpdateLibrary(video)')
 
 def update_tv_series(imdb_id):
