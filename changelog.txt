@@ -1,3 +1,7 @@
+Version 0.0.12
+- list order fix
+- urls can be ls12345678 (converted to rss internally)
+
 Version 0.0.11
 - update watchlists timer setting
 - update after add is now manual
