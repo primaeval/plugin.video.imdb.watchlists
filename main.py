@@ -384,6 +384,8 @@ def add_watchlist():
             watchlists = plugin.get_storage('watchlists')
             if url.startswith('ur'):
                 url = "http://www.imdb.com/user/%s/watchlist" % url
+            elif url.startswith('ls'):
+                url = "http://rss.imdb.com/list/%s" % url
             watchlists[name] = url
 
 @plugin.route('/remove_watchlist_dialog/')
