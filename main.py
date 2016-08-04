@@ -176,6 +176,12 @@ def list_titles(imdb_ids,list_type,export):
         elif type == "featureFilm":
             meta_url = 'plugin://plugin.video.meta/movies/play/imdb/%s/library' % imdb_id
         context_items = []
+        try:
+            if xbmcaddon.Addon('plugin.program.super.favourites'):
+                context_items.append(
+                ('iSearch', 'ActivateWindow(%d,"plugin://%s/?mode=%d&keyword=%s",return)' % (10025,'plugin.program.super.favourites', 0, urllib.quote_plus(title))))
+        except:
+            pass        
         context_items.append(
         ('Add to Library', 'XBMC.RunPlugin(%s)' % (plugin.url_for('add_to_library', imdb_id=imdb_id, type=type))))
         context_items.append(
@@ -192,12 +198,7 @@ def list_titles(imdb_ids,list_type,export):
                 ('Add to Sickrage', "XBMC.RunPlugin(plugin://plugin.video.sickrage?action=addshow&&show_name=%s)" % (urllib.quote_plus(title.encode("utf8")))))
         except:
             pass
-        try:
-            if xbmcaddon.Addon('plugin.program.super.favourites'):
-                context_items.append(
-                ('iSearch', 'ActivateWindow(%d,"plugin://%s/?mode=%d&keyword=%s",return)' % (10025,'plugin.program.super.favourites', 0, urllib.quote_plus(title))))
-        except:
-            pass
+
 
         context_items = context_items + main_context_items
         item = {
@@ -318,7 +319,7 @@ def update_tv_series(imdb_id):
 @plugin.route('/nuke')
 def nuke():
     dialog = xbmcgui.Dialog()
-    ok = dialog.ok('Delete Library', 'Are you sure?')
+    ok = dialog.yesno('Delete Library', 'Are you sure?')
     if not ok:
         return
     for root in ['special://profile/addon_data/plugin.video.imdb.watchlists/TV','special://profile/addon_data/plugin.video.imdb.watchlists/Movies']:
@@ -397,6 +398,41 @@ def category(type):
 
     return items
 
+@plugin.route('/maintenance')
+def maintenance():
+    items = []
+    items.append(
+    {
+        'label': "Add Watchlist",
+        'path': plugin.url_for('add_watchlist'),
+        'thumbnail':get_icon_path('settings'),
+    })
+    items.append(
+    {
+        'label': "Remove Watchlist",
+        'path': plugin.url_for('remove_watchlist_dialog'),
+        'thumbnail':get_icon_path('settings'),
+    })
+    items.append(
+    {
+        'label': "Update TV Shows",
+        'path': plugin.url_for('update_tv'),
+        'thumbnail':get_icon_path('settings'),
+    })
+    items.append(
+    {
+        'label': "Delete Library",
+        'path': plugin.url_for('nuke'),
+        'thumbnail':get_icon_path('settings'),
+    })
+    items.append(
+    {
+        'label': "Clean Video Library",
+        'path': 'CleanLibrary(video)',
+        'thumbnail':get_icon_path('settings'),
+    })
+    return items
+
 @plugin.route('/')
 def index():
     context_items = []
@@ -425,6 +461,13 @@ def index():
         'label': "TV",
         'path': plugin.url_for('category', type="tv"),
         'thumbnail':get_icon_path('tv'),
+        'context_menu': context_items,
+    })
+    items.append(
+    {
+        'label': "Maintenance",
+        'path': plugin.url_for('maintenance'),
+        'thumbnail':get_icon_path('settings'),
         'context_menu': context_items,
     })
 
