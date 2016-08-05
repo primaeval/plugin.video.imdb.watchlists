@@ -1,3 +1,6 @@
+Version 0.0.18
+- allow duplicates setting
+
 Version 0.0.17
 - fix
 
