@@ -19,7 +19,10 @@ import zipfile
 plugin = Plugin()
 
 if plugin.get_setting('english') == 'true':
-    headers={'Accept-Language' : 'en',"X-Forwarded-For": "8.8.8.8"}
+    headers={
+    'User-Agent' : 'Mozilla/5.0 (Windows NT 6.1; rv:48.0) Gecko/20100101 Firefox/48.0',
+    'Accept-Language' : 'en',
+    "X-Forwarded-For": "8.8.8.8"}
 else:
     headers={}
 
@@ -45,6 +48,7 @@ def get_tvdb_id(imdb_id):
 
 @plugin.route('/ls_list/<url>/<type>/<export>')
 def ls_list(url,type,export):
+    log(("ls_list",url,type,export))
     big_list_view = True
     ids = []
     r = requests.get(url, headers=headers)
@@ -67,31 +71,38 @@ def ls_list(url,type,export):
             flags=(re.DOTALL | re.MULTILINE)
         )
         if match:
+            log(url)
             old_url = url.split('?')[0]
+            log(old_url)
             new_url = "%s%s" % (old_url,match.group(1))
-
+            log(new_url)
+    log(("ids",ids))
     if not ids:
         return
-    url = 'http://www.imdb.com/title/data?ids=%s' % ','.join(ids)
-    r = requests.get(url, headers=headers)
-    html = r.text
 
-    try: imdb = json.loads(html)
-    except: return
-    imdb_ids = {}
-    for imdb_id in imdb:
-       imdb_ids[imdb_id] = imdb[imdb_id]['title']
-    ids.reverse()
+    #url = 'http://www.imdb.com/title/data?ids=%s' % ','.join(ids)
+    #log(("url",url))
+    #r = requests.get(url, headers=headers)
+    #log((r.status_code,r.headers))
+    #html = r.text
+    #imdb = json.loads(html)
+    #imdb_ids = {}
+    #for imdb_id in imdb:
+    #   imdb_ids[imdb_id] = imdb[imdb_id]['title']
+    #ids.reverse()
     items = list_titles(imdb_ids,ids,type,export)
     if new_url:
         items.append(
         {
             'label': "[COLOR orange]Next Page >>[/COLOR]",
             'path': plugin.url_for(ls_list, url=new_url, type=type, export=export),
-            'ls_url':new_url,
             'thumbnail':get_icon_path('settings'),
         })
-    return items
+    if export == "True":
+        return (new_url,items)
+    else:
+        log(items)
+        return items
 
 @plugin.route('/rss/<url>/<type>/<export>')
 def rss(url,type,export):
@@ -136,12 +147,13 @@ def watchlist(url,type,export):
         if missing:
             ids = list(missing)
             url = 'http://www.imdb.com/title/data?ids=%s' % ','.join(ids)
+            log(("url",url))
             r = requests.get(url, headers=headers)
             html = r.text
             imdb = json.loads(html)
             for imdb_id in imdb:
                imdb_ids[imdb_id] = imdb[imdb_id]['title']
-        all.reverse()
+        #all.reverse()
         return list_titles(imdb_ids,all,type,export)
 
 def list_titles(imdb_ids,order,list_type,export):
@@ -472,13 +484,14 @@ def update_watchlists():
             rss(url,'all',"True")
         elif 'list/ls' in watchlists[w]:
             while url:
-                items = ls_list(url,'all',"True")
+                (url, items) = ls_list(url,'all',"True")
+                log(url)
                 if not items:
                     break
-                if "ls_url" in items[-1]:
-                    url = items[-1]["ls_url"]
-                else:
-                    url = ''
+                #if "ls_url" in items[-1]:
+                #    url = items[-1]["ls_url"]
+                #else:
+                #    url = ''
         else:
             watchlist(url,'all',"True")
 
@@ -500,22 +513,45 @@ def category(type):
         icon = "tv"
     watchlists = plugin.get_storage('watchlists')
     items = []
+    #"Default|A-Z|User Rating|Your Rating|Popularity|Votes|Release Date|Date Added"
+    ur_sort = ['list_order','alpha','user_rating','your_rating','moviemeter','num_votes''release_date','date_added']
+    ur_order = ['asc','desc']
+    ls_sort = ['listorian','title','user_rating','your_ratings','moviemeter','num_votes''release_date_us','created']
+    ls_order = ['asc','desc']
     for watchlist in sorted(watchlists):
-        if 'rss.imdb' in watchlists[watchlist]:
+        url=watchlists[watchlist]
+        if 'rss.imdb' in url:
             route = 'rss'
-        elif 'list/ls' in watchlists[watchlist]:
+        elif 'list/ls' in url:
             route = "ls_list"
+            sort = plugin.get_setting('sort')
+            order = plugin.get_setting('order')
+            #log((sort,order))
+            if sort:
+                match = re.search(r'/(ls[0-9]*)',url)
+                ls = match.group(1)
+                url = "http://www.imdb.com/list/%s/?sort=%s:%s" % (ls,ls_sort[int(sort)],ls_order[int(order)])
+                #log(url)
+
         else:
             route = 'watchlist'
+            sort = plugin.get_setting('sort')
+            order = plugin.get_setting('order')
+            #log((sort,order))
+            if sort:
+                match = re.search(r'/(ur[0-9]*)',url)
+                ur = match.group(1)
+                url = "http://www.imdb.com/user/%s/watchlist?sort=%s%%2C%s" % (ur,ur_sort[int(sort)],ur_order[int(order)])
+                #log(url)
         context_items = []
         context_items.append(
-        ('Add to Library', 'XBMC.RunPlugin(%s)' % (plugin.url_for(route, url=watchlists[watchlist], type=type, export=True))))
+        ('Add to Library', 'XBMC.RunPlugin(%s)' % (plugin.url_for(route, url=url, type=type, export=True))))
         context_items.append(('Remove Watchlist', 'XBMC.RunPlugin(%s)' % (plugin.url_for('remove_watchlist', watchlist=watchlist))))
         context_items = context_items + main_context_items
         items.append(
         {
             'label': watchlist,
-            'path': plugin.url_for(route, url=watchlists[watchlist], type=type, export=False),
+            'path': plugin.url_for(route, url=url, type=type, export=False),
             'thumbnail':get_icon_path(icon),
             'context_menu': context_items,
         })
