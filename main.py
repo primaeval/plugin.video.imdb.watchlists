@@ -300,23 +300,23 @@ def make_list(imdb_ids,order,list_type,export):
         try:
             if xbmcaddon.Addon('plugin.program.super.favourites'):
                 context_items.append(
-                ('iSearch.', 'ActivateWindow(%d,"plugin://%s/?mode=%d&keyword=%s",return)' % (10025,'plugin.program.super.favourites', 0, urllib.quote_plus(title))))
+                ('iSearch', 'ActivateWindow(%d,"plugin://%s/?mode=%d&keyword=%s",return)' % (10025,'plugin.program.super.favourites', 0, urllib.quote_plus(title))))
         except:
             pass
         context_items.append(
-        ('Add to Library.', 'XBMC.RunPlugin(%s)' % (plugin.url_for('add_to_library', imdb_id=imdb_id, type=type))))
+        ('Add to Library', 'XBMC.RunPlugin(%s)' % (plugin.url_for('add_to_library', imdb_id=imdb_id, type=type))))
         context_items.append(
-        ('Delete from Library.', 'XBMC.RunPlugin(%s)' % (plugin.url_for('delete_from_library', imdb_id=imdb_id, type=type))))
+        ('Delete from Library', 'XBMC.RunPlugin(%s)' % (plugin.url_for('delete_from_library', imdb_id=imdb_id, type=type))))
         try:
             if type == 'featureFilm' and xbmcaddon.Addon('plugin.video.couchpotato_manager'):
                 context_items.append(
-                ('Add to Couch Potato.', "XBMC.RunPlugin(plugin://plugin.video.couchpotato_manager/movies/add-by-id/%s)" % (imdb_id)))
+                ('Add to Couch Potato', "XBMC.RunPlugin(plugin://plugin.video.couchpotato_manager/movies/add-by-id/%s)" % (imdb_id)))
         except:
             pass
         try:
             if type == 'series' and xbmcaddon.Addon('plugin.video.sickrage'):
                 context_items.append(
-                ('Add to Sickrage.', "XBMC.RunPlugin(plugin://plugin.video.sickrage?action=addshow&&show_name=%s)" % (urllib.quote_plus(title.encode("utf8")))))
+                ('Add to Sickrage', "XBMC.RunPlugin(plugin://plugin.video.sickrage?action=addshow&&show_name=%s)" % (urllib.quote_plus(title.encode("utf8")))))
         except:
             pass
 
@@ -602,8 +602,8 @@ def category(type):
                 url = "http://www.imdb.com/user/%s/watchlist?sort=%s%%2C%s" % (ur,ur_sort[int(sort)],ur_order[int(order)])
         context_items = []
         context_items.append(
-        ('Add to Library.', 'XBMC.RunPlugin(%s)' % (plugin.url_for(route, url=url, type=type, export=True))))
-        context_items.append(('Remove Watchlist.', 'XBMC.RunPlugin(%s)' % (plugin.url_for('remove_watchlist', watchlist=watchlist))))
+        ('Add to Library', 'XBMC.RunPlugin(%s)' % (plugin.url_for(route, url=url, type=type, export=True))))
+        context_items.append(('Remove Watchlist', 'XBMC.RunPlugin(%s)' % (plugin.url_for('remove_watchlist', watchlist=watchlist))))
         context_items = context_items + main_context_items
         items.append(
         {
