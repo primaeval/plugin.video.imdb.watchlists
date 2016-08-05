@@ -519,6 +519,10 @@ def add_watchlist():
         match = re.search(r'<title>([^\[]*?)</title>', html)
         if match:
             name = match.group(1)
+            if name.startswith("IMDb: "):
+                name = name[6:]
+            if name.endswith(" - IMDb"):
+                name = name[:-7]
         name = dialog.input('Enter Watchlist Name', name, type=xbmcgui.INPUT_ALPHANUM)
         if name:
             watchlists = plugin.get_storage('watchlists')
