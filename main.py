@@ -49,6 +49,7 @@ def get_tvdb_id(imdb_id):
 @plugin.route('/ls_list/<url>/<type>/<export>')
 def ls_list(url,type,export):
     log(("ls_list",url,type,export))
+    list_type = type
     big_list_view = True
     ids = []
     r = requests.get(url, headers=headers)
@@ -58,6 +59,111 @@ def ls_list(url,type,export):
         flags=(re.DOTALL | re.MULTILINE)
         ).findall(html)
     ids = ids + match
+    order = ids
+    list_items = html.split('<div class="list_item ')
+    #items = []
+    data = {}
+    for list_item in list_items:
+        temp_data = {}
+        if not re.search(r'^(odd|even)">',list_item):
+            continue
+        log(list_item)
+        #
+        img_url = ''
+        img_match = re.search(r'"(http://ia.media-imdb.com/images.*?)"', list_item, flags=(re.DOTALL | re.MULTILINE))
+        if img_match:
+            img = img_match.group(1)
+            img_url = re.sub(r'S[XY].*_.jpg','SX344_.jpg',img) #NOTE 344 is Confluence List View width
+            log(img_url)
+        temp_data['thumbnail'] = img_url
+        title = ''
+        imdbID = ''
+        year = ''
+        #
+        title_match = re.search(r'<b><a.*?href="/title/(tt[0-9]*)/".*?>(.*?)</a>', list_item, flags=(re.DOTALL | re.MULTILINE))
+        if title_match:
+            imdbID = title_match.group(1)
+            title = title_match.group(2)
+        temp_data['title'] = HTMLParser.HTMLParser().unescape(title.decode('utf-8'))
+        
+        #
+        type = ''
+        title_match = re.search(r'<span class="year_type">\((.*?)\)</span>', list_item, flags=(re.DOTALL | re.MULTILINE))
+        if title_match:
+            year = title_match.group(1)
+            if year.endswith("TV Series"):
+                type = "series"
+                year = year[0:4]
+            
+        temp_data['year'] = year
+        temp_data['type'] = type
+        '''
+        #
+        episode = ''
+        episode_id = ''
+        episode_match = re.search(r'Episode:</small>\n    <a href="/title/(tt.*?)/?ref_=adv_li_tt"\n>(.*?)</a>\n    <span class="lister-item-year text-muted unbold">\((.*?)\)</span>', item, flags=(re.DOTALL | re.MULTILINE))
+        if episode_match:
+            episode_id = episode_match.group(1)
+            episode = "%s (%s)" % (episode_match.group(2), episode_match.group(3))
+            year = episode_match.group(3)
+        '''
+        #<div class="rating rating-list" data-auth="xxx" id="tt0338013|imdb|8.3|8.3|list" data-ga-identifier="list"\n title="Users rated this 8.3/10 (665,741 votes) - click stars to rate">
+        rating = ''
+        votes = ''
+        rating_match = re.search(r'title="Users rated this (.+?)/10 \((.+?) votes\)', list_item, flags=(re.DOTALL | re.MULTILINE))
+        if rating_match:
+            rating = rating_match.group(1)
+            votes = rating_match.group(2)
+            votes = re.sub(',','',votes)
+        temp_data['rating'] = rating
+        temp_data['votes'] = votes
+        #<div class="item_description">A pair of childhood friends and neighbors fall for each other's sons. <span>(112 mins.)</span></div>
+        plot = ''
+        plot_match = re.search(r'<div class="item_description">(.*?)<span>\((.*?) mins\.\)</span></div>', list_item, flags=(re.DOTALL | re.MULTILINE))
+        if plot_match:
+            plot = plot_match.group(1).strip()
+            runtime = plot_match.group(2)
+        temp_data['plot'] = plot
+        temp_data['runtime'] = int(runtime) * 60
+        '''
+        #Stars:\n<a href="/name/nm0255124/?ref_=adv_li_st_0"\n>Tom Ellis</a>, \n<a href="/name/nm0314514/?ref_=adv_li_st_1"\n>Lauren German</a>, \n<a href="/name/nm1204760/?ref_=adv_li_st_2"\n>Kevin Alejandro</a>, \n<a href="/name/nm0940851/?ref_=adv_li_st_3"\n>D.B. Woodside</a>\n    </p>
+        cast = []
+        cast_match = re.search(r'<p class="">(.*?)</p>', list_item, flags=(re.DOTALL | re.MULTILINE))
+        if cast_match:
+            cast = cast_match.group(1)
+            cast_list = re.findall(r'<a.+?>(.+?)</a>', cast, flags=(re.DOTALL | re.MULTILINE))
+            cast = cast_list
+        '''
+        temp_data['cast'] = []
+        '''
+        #<span class="genre">\nAdventure, Comedy            </span>
+        genres = ''
+        genre_match = re.search(r'<span class="genre">(.+?)</span>', list_item, flags=(re.DOTALL | re.MULTILINE))
+        if genre_match:
+            genres = genre_match.group(1).strip()
+            #genre_list = re.findall(r'<a.+?>(.+?)</a>', genre)
+            #genres = ",".join(genre_list)
+        '''
+        temp_data['genres'] = []
+        '''
+        #class="runtime">99 min</span>
+        runtime = ''
+        runtime_match = re.search(r'class="runtime">(.+?) min</span>', list_item, flags=(re.DOTALL | re.MULTILINE))
+        if runtime_match:
+            runtime = int(runtime_match.group(1)) * 60
+        
+
+        #<span class="certificate">PG</span>
+        certificate = ''
+        certificate_match = re.search(r'<span class="certificate">(.*?)</span>', list_item, flags=(re.DOTALL | re.MULTILINE))
+        if certificate_match:
+            certificate = certificate_match.group(1)
+        '''
+        temp_data['certificate'] = ''
+       
+        
+        data[imdbID] = temp_data
+    
     new_url = ''
     match = re.search(
         '<div class="pagination">(.*?)</div>',
@@ -90,19 +196,21 @@ def ls_list(url,type,export):
     #for imdb_id in imdb:
     #   imdb_ids[imdb_id] = imdb[imdb_id]['title']
     #ids.reverse()
-    items = list_titles(imdb_ids,ids,type,export)
+    #items = list_titles(imdb_ids,ids,type,export)
     if new_url:
+        '''
         items.append(
         {
             'label': "[COLOR orange]Next Page >>[/COLOR]",
             'path': plugin.url_for(ls_list, url=new_url, type=type, export=export),
             'thumbnail':get_icon_path('settings'),
         })
+        '''
     if export == "True":
         return (new_url,items)
     else:
-        log(items)
-        return items
+        #log(items)
+        return make_list(data,order,list_type,export)
 
 @plugin.route('/rss/<url>/<type>/<export>')
 def rss(url,type,export):
@@ -157,6 +265,73 @@ def watchlist(url,type,export):
         return list_titles(imdb_ids,all,type,export)
 
 def list_titles(imdb_ids,order,list_type,export):
+    data = {}
+    for imdb_id in order:
+        temp_data = {}
+        imdb_data = imdb_ids[imdb_id]
+        temp_data['title'] = '-'
+        temp_data['year'] = ''
+        try:
+            primary = imdb_data['primary']
+            temp_data['title'] = primary['title']
+            temp_data['year'] = primary['year'][0]
+        except:
+            pass
+        temp_data['type'] = ''
+        try:
+            temp_data['type'] = imdb_data['type']
+        except:
+            pass
+        temp_data['plot'] = ''
+        try:
+            plot = imdb_data['plot']
+            temp_data['plot'] = HTMLParser.HTMLParser().unescape(plot.decode('utf-8'))
+        except:
+            pass
+        temp_data['cast'] = []
+        try:
+            credits = imdb_data['credits']
+            director = credits['director']
+            temp_data['cast'].append(director[0]['name'])
+        except:
+            pass
+        try:
+            credits = imdb_data['credits']
+            stars = credits['star']
+            for star in stars:
+                temp_data['cast'].append(star['name'])
+        except:
+            pass
+        temp_data['thumbnail'] = 'DefaultFolder.png'
+        try:
+            poster = imdb_data['poster']
+            temp_data['thumbnail'] = poster['url']
+        except:
+            pass
+        temp_data['rating'] = ''
+        temp_data['votes'] = ''
+        try:
+            ratings = imdb_data['ratings']
+            temp_data['rating'] = ratings['rating']
+            temp_data['votes'] = ratings['votes']
+        except:
+            pass
+        temp_data['genres'] = []
+        temp_data['certificate'] = '-'
+        temp_data['runtime'] = ''
+        try:
+            metadata = imdb_data['metadata']
+            temp_data['genres'] = metadata['genres']
+            temp_data['certificate'] = metadata['certificate']
+            temp_data['runtime'] = metadata['runtime']
+        except:
+            pass
+        data[imdb_id] = temp_data
+    log(data)
+    return make_list(data,order,list_type,export)
+
+
+def make_list(imdb_ids,order,list_type,export):
     main_context_items = []
     main_context_items.append(('Update Video Library', 'UpdateLibrary(video)'))
     main_context_items.append(('Update TV Shows', 'XBMC.RunPlugin(%s)' % (plugin.url_for('update_tv'))))
@@ -169,64 +344,20 @@ def list_titles(imdb_ids,order,list_type,export):
     items = []
     for imdb_id in order:
         imdb_data = imdb_ids[imdb_id]
-        title = '-'
-        year = ''
-        try:
-            primary = imdb_data['primary']
-            title = primary['title']
-            year = primary['year'][0]
-        except:
-            pass
-        type = ''
-        try:
-            type = imdb_data['type']
-        except:
-            pass
-        plot = ''
-        try:
-            plot = imdb_data['plot']
-            plot = HTMLParser.HTMLParser().unescape(plot.decode('utf-8'))
-        except:
-            pass
-        cast = []
-        try:
-            credits = imdb_data['credits']
-            director = credits['director']
-            cast.append(director[0]['name'])
-        except:
-            pass
-        try:
-            credits = imdb_data['credits']
-            stars = credits['star']
-            for star in stars:
-                cast.append(star['name'])
-        except:
-            pass
-        thumbnail = 'DefaultFolder.png'
-        try:
-            poster = imdb_data['poster']
-            thumbnail = poster['url']
-        except:
-            pass
-        rating = ''
-        votes = ''
-        try:
-            ratings = imdb_data['ratings']
-            rating = ratings['rating']
-            votes = ratings['votes']
-        except:
-            pass
-        genres = []
-        certificate = '-'
-        runtime = ''
-        try:
-            metadata = imdb_data['metadata']
-            genres = metadata['genres']
-            certificate = metadata['certificate']
-            runtime = metadata['runtime']
-        except:
-            pass
+        log(imdb_data)
+        title = imdb_data['title']
+        year = imdb_data['year']
+        type = imdb_data['type']
+        plot = imdb_data['plot']
+        cast = imdb_data['cast']
+        thumbnail = imdb_data['thumbnail']
+        rating = imdb_data['rating']
+        votes = imdb_data['votes']
+        genres = imdb_data['genres']
+        certificate = imdb_data['certificate']
+        runtime = imdb_data['runtime']
 
+        meta_url = ''
         if type == "series": #TODO episode
             meta_url = "plugin://plugin.video.imdb.watchlists/meta_tvdb/%s/%s" % (imdb_id,urllib.quote_plus(title.encode("utf8")))
         elif type == "featureFilm":
@@ -278,15 +409,14 @@ def list_titles(imdb_ids,order,list_type,export):
 
         if export == "True":
             add_to_library(imdb_id, type)
-
+    log(items)
     #if export == "True" and plugin.get_setting('update') == 'true':
     #    xbmc.executebuiltin('UpdateLibrary(video)')
 
     plugin.add_sort_method(xbmcplugin.SORT_METHOD_UNSORTED)
     plugin.add_sort_method(xbmcplugin.SORT_METHOD_TITLE)
     return items
-
-
+    
 @plugin.route('/add_to_library/<imdb_id>/<type>')
 def add_to_library(imdb_id,type):
     xbmcvfs.mkdirs('special://profile/addon_data/plugin.video.imdb.watchlists/Movies')
