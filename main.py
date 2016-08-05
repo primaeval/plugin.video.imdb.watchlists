@@ -273,6 +273,7 @@ def list_titles(imdb_ids,order,list_type,export):
     return make_list(data,order,list_type,export)
 
 
+
 def make_list(imdb_ids,order,list_type,export):
     if export == "True":
         xbmcvfs.mkdirs('special://profile/addon_data/plugin.video.imdb.watchlists/Movies')
@@ -347,6 +348,46 @@ def make_list(imdb_ids,order,list_type,export):
     plugin.add_sort_method(xbmcplugin.SORT_METHOD_TITLE)
     return items
 
+def existInKodiLibrary(id, season="1", episode="1"):
+    import json
+
+    result = False
+    if 'tt' in id:
+        # Movies
+        query = {
+            'jsonrpc': '2.0',
+            'id': 0,
+            'method': 'VideoLibrary.GetMovies',
+            'params': {
+                'properties': ['imdbnumber', 'file']
+            }
+        }
+        response = json.loads(xbmc.executeJSONRPC(json.dumps(query)))
+        movieDict = dict(
+            (movie['imdbnumber'], movie['file'])
+            for movie in response.get('result', {}).get('movies', [])
+        )
+        if movieDict.has_key(id):
+            result = True
+    else:
+        # TV Shows
+        query = {
+            'jsonrpc': '2.0',
+            'id': 0,
+            'method': 'VideoLibrary.GetTVShows',
+            'params': {
+                'properties': ['imdbnumber', 'file', 'season', 'episode']
+            }
+        }
+        response = json.loads(xbmc.executeJSONRPC(json.dumps(query)))
+        showDict = dict(
+            (show['imdbnumber'] + "-" + str(show['season']) + "-" + str(show['episode']), show['file'])
+            for show in response.get('result', {}).get('tvshows', [])
+        )
+        if showDict.has_key(id + "-" + str(season) + "-" + str(episode)):
+            result = True
+    return result
+
 @plugin.route('/add_to_library/<imdb_id>/<type>')
 def add_to_library(imdb_id,type):
     xbmcvfs.mkdirs('special://profile/addon_data/plugin.video.imdb.watchlists/Movies')
@@ -356,14 +397,17 @@ def add_to_library(imdb_id,type):
         except: pass
         update_tv_series(imdb_id)
     else:
-        f = xbmcvfs.File('special://profile/addon_data/plugin.video.imdb.watchlists/Movies/%s.strm' % (imdb_id), "wb")
-        meta_url = 'plugin://plugin.video.meta/movies/play/imdb/%s/library' % imdb_id
-        f.write(meta_url.encode("utf8"))
-        f.close()
-        f = xbmcvfs.File('special://profile/addon_data/plugin.video.imdb.watchlists/Movies/%s.nfo' % (imdb_id), "wb")
-        str = "http://www.imdb.com/title/%s/" % imdb_id
-        f.write(str.encode("utf8"))
-        f.close()
+        if plugin.get_setting('duplicates') == "false" and existInKodiLibrary(imdb_id):
+            pass
+        else:
+            f = xbmcvfs.File('special://profile/addon_data/plugin.video.imdb.watchlists/Movies/%s.strm' % (imdb_id), "wb")
+            meta_url = 'plugin://plugin.video.meta/movies/play/imdb/%s/library' % imdb_id
+            f.write(meta_url.encode("utf8"))
+            f.close()
+            f = xbmcvfs.File('special://profile/addon_data/plugin.video.imdb.watchlists/Movies/%s.nfo' % (imdb_id), "wb")
+            str = "http://www.imdb.com/title/%s/" % imdb_id
+            f.write(str.encode("utf8"))
+            f.close()
 
 @plugin.route('/delete_from_library/<imdb_id>/<type>')
 def delete_from_library(imdb_id,type):
@@ -463,10 +507,13 @@ def update_tv_series(imdb_id):
                 aired = datetime(year=int(year), month=int(month), day=int(day))
                 today = datetime.today()
                 if aired <= today:
-                    f = xbmcvfs.File('special://profile/addon_data/plugin.video.imdb.watchlists/TV/%s/S%02dE%02d.strm' % (imdb_id,int(season),int(episode)),"wb")
-                    str = "plugin://plugin.video.meta/tv/play/%s/%d/%d/library" % (tvdb_id,int(season),int(episode))
-                    f.write(str.encode("utf8"))
-                    f.close()
+                    if plugin.get_setting('duplicates') == "false" and existInKodiLibrary(id,season,episode):
+                        pass
+                    else:
+                        f = xbmcvfs.File('special://profile/addon_data/plugin.video.imdb.watchlists/TV/%s/S%02dE%02d.strm' % (imdb_id,int(season),int(episode)),"wb")
+                        str = "plugin://plugin.video.meta/tv/play/%s/%d/%d/library" % (tvdb_id,int(season),int(episode))
+                        f.write(str.encode("utf8"))
+                        f.close()
 
 @plugin.route('/nuke')
 def nuke():

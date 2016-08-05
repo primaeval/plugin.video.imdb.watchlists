@@ -6,6 +6,7 @@
 <setting id="order" type="enum" values="Ascending|Descending" label="order" enable="!eq(-1,0)" default="0"/>
 </category>
 <category label="Lab">
+<setting id="duplicates" label="Allow Library Duplicates" type="bool" default="true" />
 <setting id="update" label="Update Library after Add Watchlist to Libary" type="bool" default="false" />
 <setting type="lsep" label="Update Timer"/>
 <setting id="subscription_update" type="bool" label="Enable Update Timer" default="false"/>
