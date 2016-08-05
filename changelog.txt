@@ -1,3 +1,9 @@
+Version 0.0.13
+- rss links are gone
+- ls links are in
+- sort order in settings
+- detects list name on add
+
 Version 0.0.12
 - list order fix
 - urls can be ls12345678 (converted to rss internally)
