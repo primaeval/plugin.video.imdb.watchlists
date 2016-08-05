@@ -143,7 +143,6 @@ def ls_list(url,type,export):
     items = make_list(data,order,list_type,export)
     if new_url:
         path = plugin.url_for(ls_list, url=new_url, type=list_type, export=export)
-        log(("path",path))
         items.append(
         {
             'label': "[COLOR orange]Next Page >>[/COLOR]",
@@ -204,7 +203,6 @@ def watchlist(url,type,export):
             imdb = json.loads(html)
             for imdb_id in imdb:
                imdb_ids[imdb_id] = imdb[imdb_id]['title']
-        #all.reverse()
         return list_titles(imdb_ids,all,type,export)
 
 def list_titles(imdb_ids,order,list_type,export):
@@ -275,12 +273,6 @@ def list_titles(imdb_ids,order,list_type,export):
 
 
 def make_list(imdb_ids,order,list_type,export):
-    main_context_items = []
-    main_context_items.append(('Update Video Library.', 'UpdateLibrary(video)'))
-    main_context_items.append(('Update TV Shows.', 'XBMC.RunPlugin(%s)' % (plugin.url_for('update_tv'))))
-    main_context_items.append(('Delete Library.', 'XBMC.RunPlugin(%s)' % (plugin.url_for('nuke'))))
-    main_context_items.append(('Update Video Library.', 'UpdateLibrary(video)'))
-    main_context_items.append(('Clean Video Library.', 'CleanLibrary(video)'))
     if export == "True":
         xbmcvfs.mkdirs('special://profile/addon_data/plugin.video.imdb.watchlists/Movies')
         xbmcvfs.mkdirs('special://profile/addon_data/plugin.video.imdb.watchlists/TV')
@@ -328,8 +320,6 @@ def make_list(imdb_ids,order,list_type,export):
         except:
             pass
 
-
-        #context_items = context_items + main_context_items
         item = {
             'label': title,
             'path': meta_url,
@@ -567,12 +557,9 @@ def update_watchlists():
     watchlists = plugin.get_storage('library_watchlists')
     for w in sorted(watchlists):
         url = watchlists[w]
-        #if 'rss.imdb' in watchlists[w]:
-        #    rss(url,'all',"True")
         if 'list/ls' in watchlists[w]:
             while url:
                 (url, items) = ls_list(url,'all',"True")
-                log(url)
                 if not items:
                     break
         else:
@@ -601,9 +588,6 @@ def category(type):
     ls_order = ['asc','desc']
     for watchlist in sorted(watchlists):
         url=watchlists[watchlist]
-        #log(("WATCHLIST",watchlist,url))
-        #if 'rss.imdb' in url:
-        #    route = 'rss'
         if 'list/ls' in url:
             route = "ls_list"
             sort = plugin.get_setting('sort')
