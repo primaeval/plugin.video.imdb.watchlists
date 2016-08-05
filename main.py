@@ -67,14 +67,14 @@ def ls_list(url,type,export):
         temp_data = {}
         if not re.search(r'^(odd|even)">',list_item):
             continue
-        log(list_item)
+        #log(list_item)
         #
         img_url = ''
         img_match = re.search(r'"(http://ia.media-imdb.com/images.*?)"', list_item, flags=(re.DOTALL | re.MULTILINE))
         if img_match:
             img = img_match.group(1)
             img_url = re.sub(r'S[XY].*_.jpg','SX344_.jpg',img) #NOTE 344 is Confluence List View width
-            log(img_url)
+            #log(img_url)
         temp_data['thumbnail'] = img_url
         title = ''
         imdbID = ''
@@ -146,13 +146,6 @@ def ls_list(url,type,export):
         '''
         temp_data['genres'] = []
         '''
-        #class="runtime">99 min</span>
-        runtime = ''
-        runtime_match = re.search(r'class="runtime">(.+?) min</span>', list_item, flags=(re.DOTALL | re.MULTILINE))
-        if runtime_match:
-            runtime = int(runtime_match.group(1)) * 60
-        
-
         #<span class="certificate">PG</span>
         certificate = ''
         certificate_match = re.search(r'<span class="certificate">(.*?)</span>', list_item, flags=(re.DOTALL | re.MULTILINE))
@@ -182,7 +175,7 @@ def ls_list(url,type,export):
             log(old_url)
             new_url = "%s%s" % (old_url,match.group(1))
             log(new_url)
-    log(("ids",ids))
+    #log(("ids",ids))
     if not ids:
         return
 
@@ -197,20 +190,23 @@ def ls_list(url,type,export):
     #   imdb_ids[imdb_id] = imdb[imdb_id]['title']
     #ids.reverse()
     #items = list_titles(imdb_ids,ids,type,export)
+    items = make_list(data,order,list_type,export)
     if new_url:
-        '''
+        path = plugin.url_for(ls_list, url=new_url, type=list_type, export=export)
+        log(("path",path))
         items.append(
         {
             'label': "[COLOR orange]Next Page >>[/COLOR]",
-            'path': plugin.url_for(ls_list, url=new_url, type=type, export=export),
+            'path': path,
             'thumbnail':get_icon_path('settings'),
         })
-        '''
+        
+    
     if export == "True":
         return (new_url,items)
     else:
         #log(items)
-        return make_list(data,order,list_type,export)
+        return items
 
 @plugin.route('/rss/<url>/<type>/<export>')
 def rss(url,type,export):
@@ -327,7 +323,7 @@ def list_titles(imdb_ids,order,list_type,export):
         except:
             pass
         data[imdb_id] = temp_data
-    log(data)
+    #log(data)
     return make_list(data,order,list_type,export)
 
 
@@ -344,7 +340,7 @@ def make_list(imdb_ids,order,list_type,export):
     items = []
     for imdb_id in order:
         imdb_data = imdb_ids[imdb_id]
-        log(imdb_data)
+        #log(imdb_data)
         title = imdb_data['title']
         year = imdb_data['year']
         type = imdb_data['type']
@@ -409,7 +405,7 @@ def make_list(imdb_ids,order,list_type,export):
 
         if export == "True":
             add_to_library(imdb_id, type)
-    log(items)
+    #log(items)
     #if export == "True" and plugin.get_setting('update') == 'true':
     #    xbmc.executebuiltin('UpdateLibrary(video)')
 
