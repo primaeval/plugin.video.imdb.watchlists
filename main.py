@@ -48,7 +48,6 @@ def get_tvdb_id(imdb_id):
 
 @plugin.route('/ls_list/<url>/<type>/<export>')
 def ls_list(url,type,export):
-    log(("ls_list",url,type,export))
     list_type = type
     big_list_view = True
     ids = []
@@ -61,20 +60,18 @@ def ls_list(url,type,export):
     ids = ids + match
     order = ids
     list_items = html.split('<div class="list_item ')
-    #items = []
     data = {}
     for list_item in list_items:
         temp_data = {}
         if not re.search(r'^(odd|even)">',list_item):
             continue
-        #log(list_item)
-        #
+
         img_url = ''
         img_match = re.search(r'"(http://ia.media-imdb.com/images.*?)"', list_item, flags=(re.DOTALL | re.MULTILINE))
         if img_match:
             img = img_match.group(1)
             img_url = re.sub(r'S[XY].*_.jpg','SX344_.jpg',img) #NOTE 344 is Confluence List View width
-            #log(img_url)
+
         temp_data['thumbnail'] = img_url
         title = ''
         imdbID = ''
@@ -97,16 +94,7 @@ def ls_list(url,type,export):
             
         temp_data['year'] = year
         temp_data['type'] = type
-        '''
-        #
-        episode = ''
-        episode_id = ''
-        episode_match = re.search(r'Episode:</small>\n    <a href="/title/(tt.*?)/?ref_=adv_li_tt"\n>(.*?)</a>\n    <span class="lister-item-year text-muted unbold">\((.*?)\)</span>', item, flags=(re.DOTALL | re.MULTILINE))
-        if episode_match:
-            episode_id = episode_match.group(1)
-            episode = "%s (%s)" % (episode_match.group(2), episode_match.group(3))
-            year = episode_match.group(3)
-        '''
+
         #<div class="rating rating-list" data-auth="xxx" id="tt0338013|imdb|8.3|8.3|list" data-ga-identifier="list"\n title="Users rated this 8.3/10 (665,741 votes) - click stars to rate">
         rating = ''
         votes = ''
@@ -125,36 +113,13 @@ def ls_list(url,type,export):
             runtime = plot_match.group(2)
         temp_data['plot'] = plot
         temp_data['runtime'] = int(runtime) * 60
-        '''
-        #Stars:\n<a href="/name/nm0255124/?ref_=adv_li_st_0"\n>Tom Ellis</a>, \n<a href="/name/nm0314514/?ref_=adv_li_st_1"\n>Lauren German</a>, \n<a href="/name/nm1204760/?ref_=adv_li_st_2"\n>Kevin Alejandro</a>, \n<a href="/name/nm0940851/?ref_=adv_li_st_3"\n>D.B. Woodside</a>\n    </p>
-        cast = []
-        cast_match = re.search(r'<p class="">(.*?)</p>', list_item, flags=(re.DOTALL | re.MULTILINE))
-        if cast_match:
-            cast = cast_match.group(1)
-            cast_list = re.findall(r'<a.+?>(.+?)</a>', cast, flags=(re.DOTALL | re.MULTILINE))
-            cast = cast_list
-        '''
+
+        #TODO
         temp_data['cast'] = []
-        '''
-        #<span class="genre">\nAdventure, Comedy            </span>
-        genres = ''
-        genre_match = re.search(r'<span class="genre">(.+?)</span>', list_item, flags=(re.DOTALL | re.MULTILINE))
-        if genre_match:
-            genres = genre_match.group(1).strip()
-            #genre_list = re.findall(r'<a.+?>(.+?)</a>', genre)
-            #genres = ",".join(genre_list)
-        '''
         temp_data['genres'] = []
-        '''
-        #<span class="certificate">PG</span>
-        certificate = ''
-        certificate_match = re.search(r'<span class="certificate">(.*?)</span>', list_item, flags=(re.DOTALL | re.MULTILINE))
-        if certificate_match:
-            certificate = certificate_match.group(1)
-        '''
+        #TODO or can't do
         temp_data['certificate'] = ''
-       
-        
+
         data[imdbID] = temp_data
     
     new_url = ''
@@ -170,26 +135,11 @@ def ls_list(url,type,export):
             flags=(re.DOTALL | re.MULTILINE)
         )
         if match:
-            log(url)
             old_url = url.split('?')[0]
-            log(old_url)
             new_url = "%s%s" % (old_url,match.group(1))
-            log(new_url)
-    #log(("ids",ids))
     if not ids:
         return
 
-    #url = 'http://www.imdb.com/title/data?ids=%s' % ','.join(ids)
-    #log(("url",url))
-    #r = requests.get(url, headers=headers)
-    #log((r.status_code,r.headers))
-    #html = r.text
-    #imdb = json.loads(html)
-    #imdb_ids = {}
-    #for imdb_id in imdb:
-    #   imdb_ids[imdb_id] = imdb[imdb_id]['title']
-    #ids.reverse()
-    #items = list_titles(imdb_ids,ids,type,export)
     items = make_list(data,order,list_type,export)
     if new_url:
         path = plugin.url_for(ls_list, url=new_url, type=list_type, export=export)
@@ -200,12 +150,10 @@ def ls_list(url,type,export):
             'path': path,
             'thumbnail':get_icon_path('settings'),
         })
-        
     
     if export == "True":
         return (new_url,items)
     else:
-        #log(items)
         return items
 
 @plugin.route('/rss/<url>/<type>/<export>')
@@ -251,7 +199,6 @@ def watchlist(url,type,export):
         if missing:
             ids = list(missing)
             url = 'http://www.imdb.com/title/data?ids=%s' % ','.join(ids)
-            log(("url",url))
             r = requests.get(url, headers=headers)
             html = r.text
             imdb = json.loads(html)
@@ -323,7 +270,7 @@ def list_titles(imdb_ids,order,list_type,export):
         except:
             pass
         data[imdb_id] = temp_data
-    #log(data)
+
     return make_list(data,order,list_type,export)
 
 
@@ -340,7 +287,6 @@ def make_list(imdb_ids,order,list_type,export):
     items = []
     for imdb_id in order:
         imdb_data = imdb_ids[imdb_id]
-        #log(imdb_data)
         title = imdb_data['title']
         year = imdb_data['year']
         type = imdb_data['type']
@@ -405,9 +351,6 @@ def make_list(imdb_ids,order,list_type,export):
 
         if export == "True":
             add_to_library(imdb_id, type)
-    #log(items)
-    #if export == "True" and plugin.get_setting('update') == 'true':
-    #    xbmc.executebuiltin('UpdateLibrary(video)')
 
     plugin.add_sort_method(xbmcplugin.SORT_METHOD_UNSORTED)
     plugin.add_sort_method(xbmcplugin.SORT_METHOD_TITLE)
@@ -497,7 +440,7 @@ def update_tv():
         else:
             if imdb_id in ids:
                 update_tv_series(imdb_id)
-    #xbmc.executebuiltin('UpdateLibrary(video)')
+
 
 def update_tv_series(imdb_id):
     tvdb_id = get_tvdb_id(imdb_id)
@@ -552,7 +495,6 @@ def nuke():
             xbmcvfs.rmdir(dir)
         for file in root_files:
             xbmcvfs.delete("%s/%s" % (root,file))
-    #xbmc.executebuiltin('CleanLibrary(video)')
 
 @plugin.route('/add_watchlist')
 def add_watchlist():
@@ -614,10 +556,6 @@ def update_watchlists():
                 log(url)
                 if not items:
                     break
-                #if "ls_url" in items[-1]:
-                #    url = items[-1]["ls_url"]
-                #else:
-                #    url = ''
         else:
             watchlist(url,'all',"True")
 
@@ -625,8 +563,6 @@ def update_watchlists():
 @plugin.route('/category/<type>')
 def category(type):
     main_context_items = []
-    main_context_items.append(('Add Watchlist', 'XBMC.RunPlugin(%s)' % (plugin.url_for('add_watchlist'))))
-    #main_context_items.append(('Remove Watchlist', 'XBMC.RunPlugin(%s)' % (plugin.url_for('remove_watchlist'))))
     main_context_items.append(('Update TV Shows', 'XBMC.RunPlugin(%s)' % (plugin.url_for('update_tv'))))
     main_context_items.append(('Delete Library', 'XBMC.RunPlugin(%s)' % (plugin.url_for('nuke'))))
     main_context_items.append(('Update Video Library', 'UpdateLibrary(video)'))
@@ -652,23 +588,18 @@ def category(type):
             route = "ls_list"
             sort = plugin.get_setting('sort')
             order = plugin.get_setting('order')
-            #log((sort,order))
             if sort:
                 match = re.search(r'/(ls[0-9]*)',url)
                 ls = match.group(1)
                 url = "http://www.imdb.com/list/%s/?sort=%s:%s" % (ls,ls_sort[int(sort)],ls_order[int(order)])
-                #log(url)
-
         else:
             route = 'watchlist'
             sort = plugin.get_setting('sort')
             order = plugin.get_setting('order')
-            #log((sort,order))
             if sort:
                 match = re.search(r'/(ur[0-9]*)',url)
                 ur = match.group(1)
                 url = "http://www.imdb.com/user/%s/watchlist?sort=%s%%2C%s" % (ur,ur_sort[int(sort)],ur_order[int(order)])
-                #log(url)
         context_items = []
         context_items.append(
         ('Add to Library', 'XBMC.RunPlugin(%s)' % (plugin.url_for(route, url=url, type=type, export=True))))
@@ -681,8 +612,6 @@ def category(type):
             'thumbnail':get_icon_path(icon),
             'context_menu': context_items,
         })
-
-
     return items
 
 @plugin.route('/maintenance')
