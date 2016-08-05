@@ -2,7 +2,7 @@
 <category label="Display">
 <setting id="english" label="English Titles" type="bool" default="false" />
 <setting type="lsep" label="Sort Order"/>
-<setting id="sort" type="enum" values="Default|A-Z|User Rating|Popularity|Votes|Release Date|Runtime|Date Added" label="Sort" default="0"/>
+<setting id="sort" type="enum" values="Default|A-Z|User Rating|Your Rating|Popularity|Votes|Release Date|Date Added" label="Sort" default="0"/>
 <setting id="order" type="enum" values="Ascending|Descending" label="order" enable="!eq(-1,0)" default="0"/>
 </category>
 <category label="Lab">

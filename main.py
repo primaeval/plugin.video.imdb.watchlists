@@ -569,10 +569,6 @@ def update_watchlists():
 @plugin.route('/category/<type>')
 def category(type):
     main_context_items = []
-    main_context_items.append(('Update TV Shows.', 'XBMC.RunPlugin(%s)' % (plugin.url_for('update_tv'))))
-    main_context_items.append(('Delete Library.', 'XBMC.RunPlugin(%s)' % (plugin.url_for('nuke'))))
-    main_context_items.append(('Update Video Library.', 'UpdateLibrary(video)'))
-    main_context_items.append(('Clean Video Library.', 'CleanLibrary(video)'))
     if type == "all":
         icon = "favourites"
     elif type == "movies":
@@ -682,12 +678,6 @@ def CleanLibrary():
 @plugin.route('/')
 def index():
     context_items = []
-    context_items.append(('Add Watchlist.', 'XBMC.RunPlugin(%s)' % (plugin.url_for('add_watchlist'))))
-    context_items.append(('Remove Watchlist.', 'XBMC.RunPlugin(%s)' % (plugin.url_for('remove_watchlist_dialog'))))
-    context_items.append(('Update TV Shows.', 'XBMC.RunPlugin(%s)' % (plugin.url_for('update_tv'))))
-    context_items.append(('Delete Library.', 'XBMC.RunPlugin(%s)' % (plugin.url_for('nuke'))))
-    context_items.append(('Update Video Library.', 'UpdateLibrary(video)'))
-    context_items.append(('Clean Video Library.', 'CleanLibrary(video)'))
     items = []
     items.append(
     {
