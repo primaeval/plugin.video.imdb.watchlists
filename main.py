@@ -107,6 +107,7 @@ def ls_list(url,type,export):
         temp_data['votes'] = votes
         #<div class="item_description">A pair of childhood friends and neighbors fall for each other's sons. <span>(112 mins.)</span></div>
         plot = ''
+        runtime = 0
         plot_match = re.search(r'<div class="item_description">(.*?)<span>\((.*?) mins\.\)</span></div>', list_item, flags=(re.DOTALL | re.MULTILINE))
         if plot_match:
             plot = plot_match.group(1).strip()
