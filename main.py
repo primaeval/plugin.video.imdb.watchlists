@@ -82,7 +82,7 @@ def ls_list(url,type,export):
             imdbID = title_match.group(1)
             title = title_match.group(2)
         temp_data['title'] = HTMLParser.HTMLParser().unescape(title.decode('utf-8'))
-        
+
         #
         type = 'featureFilm'
         title_match = re.search(r'<span class="year_type">\((.*?)\)</span>', list_item, flags=(re.DOTALL | re.MULTILINE))
@@ -91,7 +91,7 @@ def ls_list(url,type,export):
             if year.endswith("TV Series"):
                 type = "series"
                 year = year[0:4]
-            
+
         temp_data['year'] = year
         temp_data['type'] = type
 
@@ -122,7 +122,7 @@ def ls_list(url,type,export):
         temp_data['certificate'] = ''
 
         data[imdbID] = temp_data
-    
+
     new_url = ''
     match = re.search(
         '<div class="pagination">(.*?)</div>',
@@ -150,7 +150,7 @@ def ls_list(url,type,export):
             'path': path,
             'thumbnail':get_icon_path('settings'),
         })
-    
+
     if export == "True":
         return (new_url,items)
     else:
@@ -346,7 +346,7 @@ def make_list(imdb_ids,order,list_type,export):
     plugin.add_sort_method(xbmcplugin.SORT_METHOD_UNSORTED)
     plugin.add_sort_method(xbmcplugin.SORT_METHOD_TITLE)
     return items
-    
+
 @plugin.route('/add_to_library/<imdb_id>/<type>')
 def add_to_library(imdb_id,type):
     xbmcvfs.mkdirs('special://profile/addon_data/plugin.video.imdb.watchlists/Movies')
@@ -503,7 +503,7 @@ def add_watchlist():
         elif 'urer/ur' in url:
             match = re.search(r'/(ur[0-9]*)',url)
             ur = match.group(1)
-            url = "http://www.imdb.com/user/%s/watchlist" % (ls)     
+            url = "http://www.imdb.com/user/%s/watchlist" % (ls)
         r = requests.get(url)
         html = r.text
         name = ''
@@ -570,6 +570,7 @@ def update_watchlists():
 @plugin.route('/category/<type>')
 def category(type):
     main_context_items = []
+    items = []
     if type == "all":
         icon = "favourites"
     elif type == "movies":
@@ -577,7 +578,16 @@ def category(type):
     else:
         icon = "tv"
     watchlists = plugin.get_storage('watchlists')
-    items = []
+    w = [w for w in watchlists]
+    if len(w) == 0:
+        items.append(
+        {
+            'label': "Add Watchlist",
+            'path': plugin.url_for('add_watchlist'),
+            'thumbnail':get_icon_path('settings'),
+        })
+        return items
+
     #"Default|A-Z|User Rating|Your Rating|Popularity|Votes|Release Date|Date Added"
     ur_sort = ['list_order','alpha','user_rating','your_rating','moviemeter','num_votes''release_date','date_added']
     ur_order = ['asc','desc']
@@ -669,17 +679,18 @@ def maintenance():
     return items
 
 @plugin.route('/UpdateLibrary')
-def UpdateLibrary():    
+def UpdateLibrary():
     xbmc.executebuiltin('UpdateLibrary(video)')
 
 @plugin.route('/CleanLibrary')
-def CleanLibrary():    
+def CleanLibrary():
     xbmc.executebuiltin('CleanLibrary(video)')
-    
+
 @plugin.route('/')
 def index():
     context_items = []
     items = []
+
     items.append(
     {
         'label': "All",
