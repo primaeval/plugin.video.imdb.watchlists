@@ -76,7 +76,8 @@ def ls_list(url,type,export):
     r = requests.get(url, headers=headers)
     html = r.text
 
-    imdb = json.loads(html)
+    try: imdb = json.loads(html)
+    except: return
     imdb_ids = {}
     for imdb_id in imdb:
        imdb_ids[imdb_id] = imdb[imdb_id]['title']
@@ -87,6 +88,7 @@ def ls_list(url,type,export):
         {
             'label': "[COLOR orange]Next Page >>[/COLOR]",
             'path': plugin.url_for(ls_list, url=new_url, type=type, export=export),
+            'ls_url':new_url,
             'thumbnail':get_icon_path('settings'),
         })
     return items
@@ -428,6 +430,21 @@ def add_watchlist():
                 url = "http://www.imdb.com/list/%s" % url
             watchlists[name] = url
 
+@plugin.route('/select_watchlists/')
+def select_watchlists():
+    watchlists = plugin.get_storage('watchlists')
+    names = sorted([w for w in watchlists])
+    dialog = xbmcgui.Dialog()
+    ret = dialog.multiselect('Select Watchlists to Add to Library', names)
+    if ret is None:
+        return
+    if not ret:
+        ret = []
+    library_watchlists = plugin.get_storage('library_watchlists')
+    for i in ret:
+        library_watchlists[names[i]] = watchlists[names[i]]
+
+
 @plugin.route('/remove_watchlist_dialog/')
 def remove_watchlist_dialog():
     watchlists = plugin.get_storage('watchlists')
@@ -448,13 +465,20 @@ def remove_watchlist(watchlist):
 def update_watchlists():
     xbmcvfs.mkdirs('special://profile/addon_data/plugin.video.imdb.watchlists/Movies')
     xbmcvfs.mkdirs('special://profile/addon_data/plugin.video.imdb.watchlists/TV')
-    watchlists = plugin.get_storage('watchlists')
+    watchlists = plugin.get_storage('library_watchlists')
     for w in sorted(watchlists):
         url = watchlists[w]
         if 'rss.imdb' in watchlists[w]:
             rss(url,'all',"True")
-        elif 'list/ls' in watchlists[watchlist]:
-            ls_list(url,'all',"True")
+        elif 'list/ls' in watchlists[w]:
+            while url:
+                items = ls_list(url,'all',"True")
+                if not items:
+                    break
+                if "ls_url" in items[-1]:
+                    url = items[-1]["ls_url"]
+                else:
+                    url = ''
         else:
             watchlist(url,'all',"True")
 
@@ -522,7 +546,13 @@ def maintenance():
     })
     items.append(
     {
-        'label': "Add All Watchlists to Library",
+        'label': "Watchlist Library Subscriptions",
+        'path': plugin.url_for('select_watchlists'),
+        'thumbnail':get_icon_path('settings'),
+    })
+    items.append(
+    {
+        'label': "Add All Subscribed Watchlists to Library",
         'path': plugin.url_for('update_watchlists'),
         'thumbnail':get_icon_path('settings'),
     })
