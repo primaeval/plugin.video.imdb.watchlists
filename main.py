@@ -280,6 +280,8 @@ def make_list(imdb_ids,order,list_type,export):
         xbmcvfs.mkdirs('special://profile/addon_data/plugin.video.imdb.watchlists/TV')
     items = []
     for imdb_id in order:
+        if plugin.get_setting('hide_duplicates') == "true" and existInKodiLibrary(imdb_id):
+            continue
         imdb_data = imdb_ids[imdb_id]
         title = imdb_data['title']
         year = imdb_data['year']
