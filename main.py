@@ -577,7 +577,7 @@ def select_watchlists():
     watchlists = plugin.get_storage('watchlists')
     names = sorted([w for w in watchlists])
     dialog = xbmcgui.Dialog()
-    ret = dialog.multiselect('Select Watchlists to Add to Library', names)
+    ret = dialog.multiselect('Select Watchlists To Subscribe To', names)
     if ret is None:
         return
     if not ret:
