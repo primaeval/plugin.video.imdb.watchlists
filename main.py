@@ -596,11 +596,24 @@ def remove_watchlist_dialog():
         name = names[index]
         remove_watchlist(name)
 
+@plugin.route('/subscribe_watchlist/<watchlist>')
+def subscribe_watchlist(watchlist):
+    watchlists = plugin.get_storage('watchlists')
+    library_watchlists = plugin.get_storage('library_watchlists')
+    library_watchlists[watchlist] = watchlists[watchlist]
+    xbmc.executebuiltin('Container.Refresh')
+
+@plugin.route('/unsubscribe_watchlist/<watchlist>')
+def unsubscribe_watchlist(watchlist):
+    library_watchlists = plugin.get_storage('library_watchlists')
+    del library_watchlists[watchlist]
+    xbmc.executebuiltin('Container.Refresh')
+
 @plugin.route('/remove_watchlist/<watchlist>')
 def remove_watchlist(watchlist):
     watchlists = plugin.get_storage('watchlists')
     del watchlists[watchlist]
-
+    xbmc.executebuiltin('Container.Refresh')
 
 @plugin.route('/update_watchlists')
 def update_watchlists():
@@ -629,6 +642,7 @@ def category(type):
     else:
         icon = "tv"
     watchlists = plugin.get_storage('watchlists')
+    library_watchlists = plugin.get_storage('library_watchlists')
     w = [w for w in watchlists]
     if len(w) == 0:
         items.append(
@@ -640,9 +654,9 @@ def category(type):
         return items
 
     #"Default|A-Z|User Rating|Your Rating|Popularity|Votes|Release Date|Date Added"
-    ur_sort = ['list_order','alpha','user_rating','your_rating','moviemeter','num_votes''release_date','date_added']
+    ur_sort = ['list_order','alpha','user_rating','your_rating','moviemeter','num_votes','release_date','date_added']
     ur_order = ['asc','desc']
-    ls_sort = ['listorian','title','user_rating','your_ratings','moviemeter','num_votes''release_date_us','created']
+    ls_sort = ['listorian','title','user_rating','your_ratings','moviemeter','num_votes','release_date_us','created']
     ls_order = ['asc','desc']
     for watchlist in sorted(watchlists):
         url=watchlists[watchlist]
@@ -667,9 +681,15 @@ def category(type):
         ('Add to Library', 'XBMC.RunPlugin(%s)' % (plugin.url_for(route, url=url, type=type, export=True))))
         context_items.append(('Remove Watchlist', 'XBMC.RunPlugin(%s)' % (plugin.url_for('remove_watchlist', watchlist=watchlist))))
         context_items = context_items + main_context_items
+        if watchlist in library_watchlists:
+            label = "%s (subscribed)" % watchlist
+            context_items.append(('Unsubscribe', 'XBMC.RunPlugin(%s)' % (plugin.url_for(unsubscribe_watchlist, watchlist=watchlist))))
+        else:
+            label = watchlist
+            context_items.append(('Subscribe', 'XBMC.RunPlugin(%s)' % (plugin.url_for(subscribe_watchlist, watchlist=watchlist))))
         items.append(
         {
-            'label': watchlist,
+            'label': label,
             'path': plugin.url_for(route, url=url, type=type, export=False),
             'thumbnail':get_icon_path(icon),
             'context_menu': context_items,
