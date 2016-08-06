@@ -1,3 +1,6 @@
+Version 0.0.19
+- optimise duplicate testing
+
 Version 0.0.18
 - allow duplicates setting
 

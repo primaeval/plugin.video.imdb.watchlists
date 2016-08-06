@@ -348,42 +348,47 @@ def make_list(imdb_ids,order,list_type,export):
     plugin.add_sort_method(xbmcplugin.SORT_METHOD_TITLE)
     return items
 
+movieDict = {}
+showDict = {}
 def existInKodiLibrary(id, season="1", episode="1"):
-    import json
-
+    global movieDict
+    global showDict
     result = False
     if 'tt' in id:
         # Movies
-        query = {
-            'jsonrpc': '2.0',
-            'id': 0,
-            'method': 'VideoLibrary.GetMovies',
-            'params': {
-                'properties': ['imdbnumber', 'file']
+        if not movieDict:
+            query = {
+                'jsonrpc': '2.0',
+                'id': 0,
+                'method': 'VideoLibrary.GetMovies',
+                'params': {
+                    'properties': ['imdbnumber', 'file']
+                }
             }
-        }
-        response = json.loads(xbmc.executeJSONRPC(json.dumps(query)))
-        movieDict = dict(
-            (movie['imdbnumber'], movie['file'])
-            for movie in response.get('result', {}).get('movies', [])
-        )
+            response = json.loads(xbmc.executeJSONRPC(json.dumps(query)))
+            movieDict = dict(
+                (movie['imdbnumber'], movie['file'])
+                for movie in response.get('result', {}).get('movies', [])
+            )
         if movieDict.has_key(id):
             result = True
     else:
         # TV Shows
-        query = {
-            'jsonrpc': '2.0',
-            'id': 0,
-            'method': 'VideoLibrary.GetTVShows',
-            'params': {
-                'properties': ['imdbnumber', 'file', 'season', 'episode']
+        if not showDict:
+            log("TVDICT")
+            query = {
+                'jsonrpc': '2.0',
+                'id': 0,
+                'method': 'VideoLibrary.GetTVShows',
+                'params': {
+                    'properties': ['imdbnumber', 'file', 'season', 'episode']
+                }
             }
-        }
-        response = json.loads(xbmc.executeJSONRPC(json.dumps(query)))
-        showDict = dict(
-            (show['imdbnumber'] + "-" + str(show['season']) + "-" + str(show['episode']), show['file'])
-            for show in response.get('result', {}).get('tvshows', [])
-        )
+            response = json.loads(xbmc.executeJSONRPC(json.dumps(query)))
+            showDict = dict(
+                (show['imdbnumber'] + "-" + str(show['season']) + "-" + str(show['episode']), show['file'])
+                for show in response.get('result', {}).get('tvshows', [])
+            )
         if showDict.has_key(id + "-" + str(season) + "-" + str(episode)):
             result = True
     return result
