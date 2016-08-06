@@ -1,3 +1,6 @@
+Version 0.0.20
+- tidy
+
 Version 0.0.19
 - optimise duplicate testing
 
