@@ -375,7 +375,6 @@ def existInKodiLibrary(id, season="1", episode="1"):
     else:
         # TV Shows
         if not showDict:
-            log("TVDICT")
             query = {
                 'jsonrpc': '2.0',
                 'id': 0,
