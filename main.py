@@ -442,7 +442,10 @@ def meta_tvdb(imdb_id,title):
 def update_tv():
     xbmcvfs.mkdirs('special://profile/addon_data/plugin.video.imdb.watchlists/Movies')
     xbmcvfs.mkdirs('special://profile/addon_data/plugin.video.imdb.watchlists/TV')
-    last_run  = datetime.fromtimestamp(time.mktime(time.strptime(plugin.get_setting('update_tv_time').encode('utf-8', 'replace'), "%Y-%m-%d %H:%M:%S")))
+    try:
+        last_run  = datetime.fromtimestamp(time.mktime(time.strptime(plugin.get_setting('update_tv_time').encode('utf-8', 'replace'), "%Y-%m-%d %H:%M:%S")))
+    except:
+        last_run = datetime.datetime(1970,1,1)
     now = datetime.now()
     next_day = last_run + timedelta(hours=24)
     next_week = last_run + timedelta(days=7)
