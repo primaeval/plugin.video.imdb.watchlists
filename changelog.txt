@@ -1,3 +1,6 @@
+Version 0.0.22
+- last_run exception
+
 Version 0.0.21
 - subscribe context menu
 - hide duplicates
