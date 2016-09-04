@@ -1,0 +1,85 @@
+IMDb Watchlists
+
+# Add Watchlist
+- shown when no lists have been added or in Maintenance
+- either
+  - user url eg http://www.imdb.com/user/ur11111111/watchlist
+  - user number eg ur11111111
+  - list url eg  http://www.imdb.com/list/ls11111111/
+  - list number eg ls11111111
+- addon will attempt to read title of the Watchlist
+
+# Remove Watchlist
+- context menu or Maintenance
+
+# Add To Library
+- Movies - end up in userdata\addon_data\plugin.video.imdb.watchlists\Movies
+  - Movies are named with tt1111111
+  - the strm file contains a link to play in Meta4Kodi
+  - the nfo file contains a link to IMDb
+
+# Delete From Library
+- will delete the strm and nfo files from userdata\addon_data\plugin.video.imdb.watchlists\Movies or TV
+
+# TV Shows - userdata\addon_data\plugin.video.imdb.watchlists\TV
+  - Shows have a folder named with the IMDb number tt1111111
+  - inside the folder is an nfo file with a link to the tvdb number
+  - the strm files are links to Meta4Kodi
+
+# Update TV Shows
+  - will scan the TV folder and search TVDB for updated episodes
+
+# iSearch
+  - will launch Super Favourites iSearch with the name of the Movie or TV Show filled
+  - user Spoyser's repo version of Super Favourites to get the latest addon searches
+
+# Add to Sickrage
+  - will appear if you have plugin.video.sickrage for tv shows
+  
+# Add to Couchpotato
+  - will appear if you have plugin.video.couchpotato_manager for movies
+  
+# Kodi Library Integration
+  - add the userdata\addon_data\plugin.video.imdb.watchlists\Movies or TV in Kodi\Video\Files
+  - set them to Movies and TV respectively
+  - run the Kodi commands Update Library or context menu Scan For New Content to add them to your Kodi library
+  
+# Subscribe
+  - either watchlist context menu or Maintenance \ Watchlist Library Subscriptions
+  - this sets the watchlist up for scheduled updates
+  - nothing is added right now
+  
+# Add All Subscribed Watchlists to Library
+  - will add your subscribed watchlist contents to the Movies or TV folders
+  - it effectively runs Add To Library on each movie or tv show in your library
+  - it won't run the Kodi \ Update Library command for you
+  
+# Delete Library
+  - will delete every movie and tv show in the userdata Movie and TV folders
+  
+# Update Video Library
+  - will run the Kodi \ Update Library command for you
+  - if you added the Movie and TV folder in step "Kodi Library Integration" they should be in your normal Kodi library now
+  
+# Clean Video Library
+  - will run Kodi \ Clean Library (video) 
+  - if you have deleted any items they should be gone from the Kodi Library too after this
+  
+# Settings
+
+- English Titles - try to trick IMDb into thinking you live in the USA
+
+- Hide Movies Already in Library
+
+- Sort Order
+
+- Update Libary After Add Watchlist to Library - might be slow if you add a TV Show with many seasons
+
+# Update Timer 
+- TV Shows - only the TV folder will be scanned for new episodes
+- Subscribed Watchlists - any new items in your watchlist will be added to the userdata folder
+- NOTE: Kodi \ Update Library is NOT run after an update
+- you can use "XBMC Library Auto Update" service.libraryautoupdate to trigger an update
+
+
+
