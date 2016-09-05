@@ -49,7 +49,7 @@ IMDb Watchlists
   - this sets the watchlist up for scheduled updates
   - nothing is added right now
   
-# Add All Subscribed Watchlists to Library
+# Select Subscriptions
   - will add your subscribed watchlist contents to the Movies or TV folders
   - it effectively runs Add To Library on each movie or tv show in your library
   - it won't run the Kodi \ Update Library command for you
@@ -57,11 +57,11 @@ IMDb Watchlists
 # Delete Library
   - will delete every movie and tv show in the userdata Movie and TV folders
   
-# Update Video Library
+# Update Kodi Video Library
   - will run the Kodi \ Update Library command for you
   - if you added the Movie and TV folder in step "Kodi Library Integration" they should be in your normal Kodi library now
   
-# Clean Video Library
+# Clean Kodi Video Library
   - will run Kodi \ Clean Library (video) 
   - if you have deleted any items they should be gone from the Kodi Library too after this
   

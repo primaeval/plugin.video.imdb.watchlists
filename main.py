@@ -724,13 +724,13 @@ def maintenance():
     })
     items.append(
     {
-        'label': "Watchlist Library Subscriptions",
+        'label': "Select Subscriptions",
         'path': plugin.url_for('select_watchlists'),
         'thumbnail':get_icon_path('settings'),
     })
     items.append(
     {
-        'label': "Add All Subscribed Watchlists to Library",
+        'label': "Update Library",
         'path': plugin.url_for('update_watchlists'),
         'thumbnail':get_icon_path('settings'),
     })
@@ -742,13 +742,13 @@ def maintenance():
     })
     items.append(
     {
-        'label': "Update Video Library",
+        'label': "Update Kodi Video Library",
         'path': plugin.url_for('UpdateLibrary'),
         'thumbnail':get_icon_path('settings'),
     })
     items.append(
     {
-        'label': "Clean Video Library",
+        'label': "Clean Kodi Video Library",
         'path': plugin.url_for('CleanLibrary'),
         'thumbnail':get_icon_path('settings'),
     })
