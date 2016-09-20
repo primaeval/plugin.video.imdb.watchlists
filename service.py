@@ -60,6 +60,8 @@ class AutoUpdater:
 
     def runProgram(self):
         if ADDON.getSetting('login_update') == "true":
+            delay = int(ADDON.getSetting('login_delay'))
+            time.sleep(delay*60)
             self.update()
         while not xbmc.abortRequested:
             if subscription_update():
