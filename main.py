@@ -346,6 +346,7 @@ def make_list(imdb_ids,order,list_type,export):
         if export == "True":
             add_to_library(imdb_id, type)
 
+    plugin.set_content('movies')
     plugin.add_sort_method(xbmcplugin.SORT_METHOD_UNSORTED)
     plugin.add_sort_method(xbmcplugin.SORT_METHOD_TITLE)
     return items
