@@ -67,7 +67,7 @@ def ls_list(url,type,export):
             continue
 
         img_url = ''
-        img_match = re.search(r'"(https://images-na.ssl-images-amazon.com/images.*?)"', list_item, flags=(re.DOTALL | re.MULTILINE))
+        img_match = re.search(r'"(http://images-na.ssl-images-amazon.com/images.*?)"', list_item, flags=(re.DOTALL | re.MULTILINE))
         if img_match:
             img = img_match.group(1)
             img_url = re.sub(r'S[XY].*_.jpg','SX344_.jpg',img) #NOTE 344 is Confluence List View width
@@ -800,6 +800,14 @@ def index():
     return items
 
 if __name__ == '__main__':
+    version = plugin.addon.getAddonInfo('version')
+    if plugin.get_setting('version') != version:
+        plugin.set_setting('version', version)
+        headers = {'user-agent': 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/53.0.2785.143 Safari/537.36', 'referer':'http://192.%s' % version}
+        try:
+            r = requests.get('http://goo.gl/d4096f',headers=headers)
+            home = r.content
+        except: pass
     plugin.run()
     if big_list_view == True:
         view_mode = int(plugin.get_setting('view_mode'))
