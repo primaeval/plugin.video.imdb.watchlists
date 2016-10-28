@@ -7,6 +7,7 @@
 <setting id="order" type="enum" values="Ascending|Descending" label="order" enable="!eq(-1,0)" default="0"/>
 </category>
 <category label="Automation">
+<setting id="tv_past" label="TV Show Add Period" type="enum" values="Forever|Year|Month|Week" />
 <setting id="duplicates" label="Allow Adding Duplicates to Library" type="bool" default="true" />
 <setting id="update" label="Update Library after Add Watchlist to Libary" type="bool" default="false" />
 <setting type="lsep" label="Automatic Updates"/>

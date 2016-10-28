@@ -503,6 +503,17 @@ def update_tv_series(imdb_id):
         xml = z.read()
     except:
         return
+
+    tv_past = plugin.get_setting('tv_past')
+    if tv_past == "0":
+        since = None
+    elif tv_past == "1":
+        since = timedelta(weeks=52)
+    elif tv_past == "2":
+        since = timedelta(weeks=4)
+    elif tv_past == "3":
+        since = timedelta(weeks=1)
+
     match = re.compile(
         '<Episode>.*?<id>(.*?)</id>.*?<EpisodeNumber>(.*?)</EpisodeNumber>.*?<FirstAired>(.*?)</FirstAired>.*?<SeasonNumber>(.*?)</SeasonNumber>.*?</Episode>',
         flags=(re.DOTALL | re.MULTILINE)
@@ -517,13 +528,14 @@ def update_tv_series(imdb_id):
                 aired = datetime(year=int(year), month=int(month), day=int(day))
                 today = datetime.today()
                 if aired <= today:
-                    if plugin.get_setting('duplicates') == "false" and existInKodiLibrary(id,season,episode):
-                        pass
-                    else:
-                        f = xbmcvfs.File('special://profile/addon_data/plugin.video.imdb.watchlists/TV/%s/S%02dE%02d.strm' % (imdb_id,int(season),int(episode)),"wb")
-                        str = "plugin://plugin.video.meta/tv/play/%s/%d/%d/library" % (tvdb_id,int(season),int(episode))
-                        f.write(str.encode("utf8"))
-                        f.close()
+                    if not since or (aired > (today - since)):
+                        if plugin.get_setting('duplicates') == "false" and existInKodiLibrary(id,season,episode):
+                            pass
+                        else:
+                            f = xbmcvfs.File('special://profile/addon_data/plugin.video.imdb.watchlists/TV/%s/S%02dE%02d.strm' % (imdb_id,int(season),int(episode)),"wb")
+                            str = "plugin://plugin.video.meta/tv/play/%s/%d/%d/library" % (tvdb_id,int(season),int(episode))
+                            f.write(str.encode("utf8"))
+                            f.close()
 
 @plugin.route('/nuke')
 def nuke():
