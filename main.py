@@ -505,6 +505,7 @@ def update_tv_series(imdb_id):
         return
 
     tv_past = plugin.get_setting('tv_past')
+    since = None
     if tv_past == "0":
         since = None
     elif tv_past == "1":
