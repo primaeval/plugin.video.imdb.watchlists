@@ -1,4 +1,4 @@
-Version 0.0.29
+Version 0.0.29-30
 - TV Show period filter in Settings\Automation\TV Show Add Period
 
 Version 0.0.27-28
