@@ -1,3 +1,6 @@
+Version 0.0.31
+- ls list image and mini-series fix
+
 Version 0.0.29-30
 - TV Show period filter in Settings\Automation\TV Show Add Period
 
