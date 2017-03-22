@@ -67,7 +67,7 @@ def ls_list(url,type,export):
             continue
 
         img_url = ''
-        img_match = re.search(r'"(http://images-na.ssl-images-amazon.com/images.*?)"', list_item, flags=(re.DOTALL | re.MULTILINE))
+        img_match = re.search(r'"(https://images-na.ssl-images-amazon.com/images.*?)"', list_item, flags=(re.DOTALL | re.MULTILINE))
         if img_match:
             img = img_match.group(1)
             img_url = re.sub(r'S[XY].*_.jpg','SX344_.jpg',img) #NOTE 344 is Confluence List View width
@@ -88,7 +88,7 @@ def ls_list(url,type,export):
         title_match = re.search(r'<span class="year_type">\((.*?)\)</span>', list_item, flags=(re.DOTALL | re.MULTILINE))
         if title_match:
             year = title_match.group(1)
-            if year.endswith("TV Series"):
+            if year.endswith("Series"):
                 type = "series"
                 year = year[0:4]
 
