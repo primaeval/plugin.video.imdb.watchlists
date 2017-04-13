@@ -299,7 +299,7 @@ def make_list(imdb_ids,order,list_type,export):
         if type == "series": #TODO episode
             meta_url = "plugin://plugin.video.imdb.watchlists/meta_tvdb/%s/%s" % (imdb_id,urllib.quote_plus(title.encode("utf8")))
         elif type == "featureFilm":
-            meta_url = 'plugin://plugin.video.meta/movies/play/imdb/%s/library' % imdb_id
+            meta_url = 'plugin://%s/movies/play/imdb/%s/library' % (plugin.get_setting('catchup.plugin').lower(),imdb_id)
         context_items = []
         try:
             if xbmcaddon.Addon('plugin.program.super.favourites'):
@@ -408,7 +408,7 @@ def add_to_library(imdb_id,type):
             pass
         else:
             f = xbmcvfs.File('special://profile/addon_data/plugin.video.imdb.watchlists/Movies/%s.strm' % (imdb_id), "wb")
-            meta_url = 'plugin://plugin.video.meta/movies/play/imdb/%s/library' % imdb_id
+            meta_url = 'plugin://%s/movies/play/imdb/%s/library' % (plugin.get_setting('catchup.plugin').lower(),imdb_id)
             f.write(meta_url.encode("utf8"))
             f.close()
             f = xbmcvfs.File('special://profile/addon_data/plugin.video.imdb.watchlists/Movies/%s.nfo' % (imdb_id), "wb")
@@ -433,7 +433,7 @@ def delete_from_library(imdb_id,type):
 @plugin.route('/meta_tvdb/<imdb_id>/<title>')
 def meta_tvdb(imdb_id,title):
     tvdb_id = get_tvdb_id(imdb_id)
-    meta_url = "plugin://plugin.video.meta/tv/tvdb/%s" % tvdb_id
+    meta_url = "plugin://%s/tv/tvdb/%s" % (plugin.get_setting('catchup.plugin').lower(),tvdb_id)
 
     item ={'label':title, 'path':meta_url, 'thumbnail': get_icon_path('meta')}
     #TODO launch into Meta seasons view
@@ -489,7 +489,7 @@ def update_tv():
 
 def update_tv_series(imdb_id):
     tvdb_id = get_tvdb_id(imdb_id)
-    meta_url = "plugin://plugin.video.meta/tv/tvdb/%s" % tvdb_id
+    meta_url = "plugin://%s/tv/tvdb/%s" % (plugin.get_setting('catchup.plugin').lower(),tvdb_id)
     f = xbmcvfs.File('special://profile/addon_data/plugin.video.imdb.watchlists/TV/%s/tvshow.nfo' % imdb_id,"wb")
     str = "http://thetvdb.com/index.php?tab=series&id=%s" % tvdb_id
     f.write(str.encode("utf8"))
@@ -534,7 +534,7 @@ def update_tv_series(imdb_id):
                             pass
                         else:
                             f = xbmcvfs.File('special://profile/addon_data/plugin.video.imdb.watchlists/TV/%s/S%02dE%02d.strm' % (imdb_id,int(season),int(episode)),"wb")
-                            str = "plugin://plugin.video.meta/tv/play/%s/%d/%d/library" % (tvdb_id,int(season),int(episode))
+                            str = "plugin://%s/tv/play/%s/%d/%d/library" % (plugin.get_setting('catchup.plugin').lower(),tvdb_id,int(season),int(episode))
                             f.write(str.encode("utf8"))
                             f.close()
 

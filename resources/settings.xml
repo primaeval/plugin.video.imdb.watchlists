@@ -1,5 +1,8 @@
 <settings>
 <category label="Display">
+<setting type="sep"/>
+<setting id="catchup.plugin" label="Catchup Addon Id (Meta|MetalliQ)" type="text" default="plugin.video.meta" />
+<setting type="sep"/>
 <setting id="english" label="English Titles" type="bool" default="false" />
 <setting id="hide_duplicates" label="Hide Movies Already In Library" type="bool" default="false" />
 <setting type="lsep" label="Sort Order"/>
