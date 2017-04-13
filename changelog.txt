@@ -1,3 +1,6 @@
+Version 0.0.32
+- catchup plugin setting
+
 Version 0.0.31
 - ls list image and mini-series fix
 
