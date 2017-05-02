@@ -573,7 +573,7 @@ def add_watchlist():
         elif 'user/ur' in url:
             match = re.search(r'/(ur[0-9]*)',url)
             ur = match.group(1)
-            url = "http://www.imdb.com/user/%s/watchlist" % (ls)
+            url = "http://www.imdb.com/user/%s/watchlist" % (ur)
         r = requests.get(url)
         html = r.text
         name = ''
