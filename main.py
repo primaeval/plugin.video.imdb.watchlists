@@ -520,6 +520,8 @@ def update_tv_series(imdb_id):
         flags=(re.DOTALL | re.MULTILINE)
         ).findall(xml)
     for id,episode,aired,season in match:
+        if (season == "0") and (plugin.get_setting('specials') == "false"):
+            continue
         if aired:
             match = re.search(r'([0-9]*?)-([0-9]*?)-([0-9]*)',aired)
             if match:
