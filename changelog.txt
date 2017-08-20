@@ -1,3 +1,6 @@
+Version 0.0.33
+- Settings \ Automation \ Include Special Episodes
+
 Version 0.0.32
 - catchup plugin setting
 
