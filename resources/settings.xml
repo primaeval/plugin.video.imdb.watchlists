@@ -7,7 +7,7 @@
 <setting id="movie.library" label="Movie Library Url" type="text" enable="eq(-1,true)" default="plugin://plugin.video.*/?action=play&amp;imdb=%I&amp;year=%Y&amp;title=%T" />
 <setting type="lsep" label="%W tv show, %S season, %E episode, %V tvdb id"/>
 <setting id="tv.library.url" label="Custom TV Library Url" type="bool" default="false" />
-<setting id="tv.library" label="TV Library Url" type="text" enable="eq(-1,true)" default="plugin://plugin.video.covenant/?action=play&amp;imdb=%I&amp;year=%Y&amp;tvshowtitle=%W&amp;season=%S&amp;episode=%E&amp;tvdb=%V&amp;title=%T" />
+<setting id="tv.library" label="TV Library Url" type="text" enable="eq(-1,true)" default="plugin://plugin.video.*/?action=play&amp;imdb=%I&amp;year=%Y&amp;tvshowtitle=%W&amp;season=%S&amp;episode=%E&amp;tvdb=%V&amp;title=%T" />
 <setting type="sep"/>
 <setting id="english" label="English Titles" type="bool" default="false" />
 <setting id="hide_duplicates" label="Hide Movies Already In Library" type="bool" default="false" />
