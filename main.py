@@ -408,9 +408,9 @@ def add_to_library(imdb_id,type,title,year):
             pass
         else:
             f = xbmcvfs.File('special://profile/addon_data/plugin.video.imdb.watchlists/Movies/%s.strm' % (imdb_id), "wb")
-            movie_library_string = plugin.get_setting('movie.library.string')
+            movie_library_url = plugin.get_setting('movie.library.url')
             meta_url = plugin.get_setting('movie.library')
-            if movie_library_string and meta_url:
+            if movie_library_url and meta_url:
                 meta_url = meta_url.replace("%Y",year)
                 meta_url = meta_url.replace("%I",imdb_id)
                 meta_url = meta_url.replace("%T",title)
@@ -511,6 +511,17 @@ def update_tv_series(imdb_id):
     except:
         return
 
+    match = re.search('<FirstAired>([0-9]{4}).*?</FirstAired>',xml)
+    if match:
+        series_year = match.group(1)
+    else:
+        series_year = "1900"
+    match = re.search('<SeriesName>(.*?)</SeriesName>',xml)
+    if match:
+        series_name = match.group(1)
+    else:
+        series_name = "unknown"
+
     tv_past = plugin.get_setting('tv_past')
     since = None
     if tv_past == "0":
@@ -542,9 +553,20 @@ def update_tv_series(imdb_id):
                         if plugin.get_setting('duplicates') == "false" and existInKodiLibrary(id,season,episode):
                             pass
                         else:
+                            tv_library_url = plugin.get_setting('tv.library.url')
+                            meta_url = plugin.get_setting('tv.library')
+                            if tv_library_url and meta_url:
+                                meta_url = meta_url.replace("%Y",series_year)
+                                meta_url = meta_url.replace("%I",imdb_id)
+                                meta_url = meta_url.replace("%T","unknown")
+                                meta_url = meta_url.replace("%W",urllib.quote_plus(series_name))
+                                meta_url = meta_url.replace("%S",season)
+                                meta_url = meta_url.replace("%E",episode)
+                                meta_url = meta_url.replace("%V",tvdb_id)
+                            else:
+                                meta_url = "plugin://%s/tv/play/%s/%d/%d/library" % (plugin.get_setting('catchup.plugin').lower(),tvdb_id,int(season),int(episode))
                             f = xbmcvfs.File('special://profile/addon_data/plugin.video.imdb.watchlists/TV/%s/S%02dE%02d.strm' % (imdb_id,int(season),int(episode)),"wb")
-                            str = "plugin://%s/tv/play/%s/%d/%d/library" % (plugin.get_setting('catchup.plugin').lower(),tvdb_id,int(season),int(episode))
-                            f.write(str.encode("utf8"))
+                            f.write(meta_url.encode("utf8"))
                             f.close()
 
 @plugin.route('/nuke')
