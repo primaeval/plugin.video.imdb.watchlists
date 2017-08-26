@@ -308,7 +308,7 @@ def make_list(imdb_ids,order,list_type,export):
         except:
             pass
         context_items.append(
-        ('Add to Library', 'XBMC.RunPlugin(%s)' % (plugin.url_for('add_to_library', imdb_id=imdb_id, type=type))))
+        ('Add to Library', 'XBMC.RunPlugin(%s)' % (plugin.url_for('add_to_library', imdb_id=imdb_id, type=type, title=title, year=year))))
         context_items.append(
         ('Delete from Library', 'XBMC.RunPlugin(%s)' % (plugin.url_for('delete_from_library', imdb_id=imdb_id, type=type))))
         try:
@@ -344,7 +344,7 @@ def make_list(imdb_ids,order,list_type,export):
             items.append(item)
 
         if export == "True":
-            add_to_library(imdb_id, type)
+            add_to_library(imdb_id, type, title, year)
 
     plugin.set_content('movies')
     plugin.add_sort_method(xbmcplugin.SORT_METHOD_UNSORTED)
@@ -395,8 +395,8 @@ def existInKodiLibrary(id, season="1", episode="1"):
             result = True
     return result
 
-@plugin.route('/add_to_library/<imdb_id>/<type>')
-def add_to_library(imdb_id,type):
+@plugin.route('/add_to_library/<imdb_id>/<type>/<title>/<year>')
+def add_to_library(imdb_id,type,title,year):
     xbmcvfs.mkdirs('special://profile/addon_data/plugin.video.imdb.watchlists/Movies')
     xbmcvfs.mkdirs('special://profile/addon_data/plugin.video.imdb.watchlists/TV')
     if type == "series":
@@ -408,7 +408,14 @@ def add_to_library(imdb_id,type):
             pass
         else:
             f = xbmcvfs.File('special://profile/addon_data/plugin.video.imdb.watchlists/Movies/%s.strm' % (imdb_id), "wb")
-            meta_url = 'plugin://%s/movies/play/imdb/%s/library' % (plugin.get_setting('catchup.plugin').lower(),imdb_id)
+            movie_library_string = plugin.get_setting('movie.library.string')
+            meta_url = plugin.get_setting('movie.library')
+            if movie_library_string and meta_url:
+                meta_url = meta_url.replace("%Y",year)
+                meta_url = meta_url.replace("%I",imdb_id)
+                meta_url = meta_url.replace("%T",title)
+            else:
+                meta_url = 'plugin://%s/movies/play/imdb/%s/library' % (plugin.get_setting('catchup.plugin').lower(),imdb_id)
             f.write(meta_url.encode("utf8"))
             f.close()
             f = xbmcvfs.File('special://profile/addon_data/plugin.video.imdb.watchlists/Movies/%s.nfo' % (imdb_id), "wb")
