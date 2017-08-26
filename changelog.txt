@@ -1,3 +1,6 @@
+Version 0.0.34
+- custom Library Urls in Settings
+
 Version 0.0.33
 - Settings \ Automation \ Include Special Episodes
 
