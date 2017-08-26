@@ -185,7 +185,6 @@ def watchlist(url,type,export):
     big_list_view = True
     r = requests.get(url, headers=headers)
     html = r.text
-
     match = re.search(r'IMDbReactInitialState\.push\(({.*?})\);',html)
     if match:
         data = match.group(1)
@@ -205,6 +204,25 @@ def watchlist(url,type,export):
             for imdb_id in imdb:
                imdb_ids[imdb_id] = imdb[imdb_id]['title']
         return list_titles(imdb_ids,all,type,export)
+
+@plugin.route('/movie_search/<url>/<type>/<export>')
+def movie_search(url,type,export):
+    count = 0
+    while url:
+        html = requests.get(url,headers=headers).content
+        matches = re.findall('<a href="/title/(tt[0-9]*)/\?ref_=adv_li_tt"\n>(.*?)</a>\n    <span class="lister-item-year text-muted unbold">\((.*?)\)</span>',html,flags=(re.DOTALL | re.MULTILINE))
+        for match in matches:
+            imdb_id = match[0]
+            type = "movie"
+            title = match[1]
+            year = match[2]
+            add_to_library(imdb_id, type, urllib.quote_plus(title), year)
+        match = re.search('<a href="(.*?)&ref_=adv_nxt"',html)
+        if match:
+            url = "http://www.imdb.com/search/title" + match.group(1)
+        count = count + 1
+        if count >= int(plugin.get_setting('search.pages')):
+            break
 
 def list_titles(imdb_ids,order,list_type,export):
     data = {}
@@ -588,6 +606,16 @@ def nuke():
         for file in root_files:
             xbmcvfs.delete("%s/%s" % (root,file))
 
+@plugin.route('/add_movie_search')
+def add_movie_search():
+    dialog = xbmcgui.Dialog()
+    url = dialog.input('Enter Movie Search Url', type=xbmcgui.INPUT_ALPHANUM)
+    if url:
+        name = dialog.input('Enter Movie Search Name', "", type=xbmcgui.INPUT_ALPHANUM)
+        if name:
+            movie_searches = plugin.get_storage('movie_searches')
+            movie_searches[name] = url
+
 @plugin.route('/add_watchlist')
 def add_watchlist():
     dialog = xbmcgui.Dialog()
@@ -636,6 +664,17 @@ def select_watchlists():
         library_watchlists[names[i]] = watchlists[names[i]]
 
 
+
+@plugin.route('/remove_movie_search_dialog/')
+def remove_movie_search_dialog():
+    movie_searches = plugin.get_storage('movie_searches')
+    names = sorted([w for w in movie_searches])
+    dialog = xbmcgui.Dialog()
+    index = dialog.select('Select Movie Search to Remove', names)
+    if index >= 0:
+        name = names[index]
+        remove_movie_search(name)
+
 @plugin.route('/remove_watchlist_dialog/')
 def remove_watchlist_dialog():
     watchlists = plugin.get_storage('watchlists')
@@ -665,10 +704,22 @@ def remove_watchlist(watchlist):
     del watchlists[watchlist]
     xbmc.executebuiltin('Container.Refresh')
 
+@plugin.route('/remove_movie_search/<watchlist>')
+def remove_movie_search(watchlist):
+    movie_searches = plugin.get_storage('movie_searches')
+    del movie_searches[watchlist]
+    xbmc.executebuiltin('Container.Refresh')
+
 @plugin.route('/update_watchlists')
 def update_watchlists():
     xbmcvfs.mkdirs('special://profile/addon_data/plugin.video.imdb.watchlists/Movies')
     xbmcvfs.mkdirs('special://profile/addon_data/plugin.video.imdb.watchlists/TV')
+
+    movie_searches = plugin.get_storage('movie_searches')
+    for w in sorted(movie_searches):
+        url = movie_searches[w]
+        movie_search(url,'all',"True")
+
     watchlists = plugin.get_storage('library_watchlists')
     for w in sorted(watchlists):
         url = watchlists[w]
@@ -797,6 +848,18 @@ def maintenance():
         'path': plugin.url_for('CleanLibrary'),
         'thumbnail':get_icon_path('settings'),
     })
+    items.append(
+    {
+        'label': "Add Movie Search Subscription",
+        'path': plugin.url_for('add_movie_search'),
+        'thumbnail':get_icon_path('settings'),
+    })
+    items.append(
+    {
+        'label': "Remove Movie Search Subscription",
+        'path': plugin.url_for('remove_movie_search_dialog'),
+        'thumbnail':get_icon_path('settings'),
+    })
     return items
 
 @plugin.route('/UpdateLibrary')
@@ -819,6 +882,7 @@ def index():
         'thumbnail':get_icon_path('favourites'),
         'context_menu': context_items,
     })
+    context_items = []
     items.append(
     {
         'label': "Movies",
