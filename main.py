@@ -322,11 +322,11 @@ def make_list(imdb_ids,order,list_type,export):
         try:
             if xbmcaddon.Addon('plugin.program.super.favourites'):
                 context_items.append(
-                ('iSearch', 'ActivateWindow(%d,"plugin://%s/?mode=%d&keyword=%s",return)' % (10025,'plugin.program.super.favourites', 0, urllib.quote_plus(title))))
+                ('iSearch', 'ActivateWindow(%d,"plugin://%s/?mode=%d&keyword=%s",return)' % (10025,'plugin.program.super.favourites', 0, urllib.quote_plus(title.encode("utf8")))))
         except:
             pass
         context_items.append(
-        ('Add to Library', 'XBMC.RunPlugin(%s)' % (plugin.url_for('add_to_library', imdb_id=imdb_id, type=type, title=title, year=year))))
+        ('Add to Library', 'XBMC.RunPlugin(%s)' % (plugin.url_for('add_to_library', imdb_id=imdb_id, type=type, title=urllib.quote_plus(title.encode("utf8")), year=year))))
         context_items.append(
         ('Delete from Library', 'XBMC.RunPlugin(%s)' % (plugin.url_for('delete_from_library', imdb_id=imdb_id, type=type))))
         try:
@@ -428,7 +428,7 @@ def add_to_library(imdb_id,type,title,year):
             f = xbmcvfs.File('special://profile/addon_data/plugin.video.imdb.watchlists/Movies/%s.strm' % (imdb_id), "wb")
             movie_library_url = plugin.get_setting('movie.library.url')
             meta_url = plugin.get_setting('movie.library')
-            if movie_library_url and meta_url:
+            if movie_library_url == "true" and meta_url:
                 meta_url = meta_url.replace("%Y",year)
                 meta_url = meta_url.replace("%I",imdb_id)
                 meta_url = meta_url.replace("%T",title)
@@ -573,7 +573,7 @@ def update_tv_series(imdb_id):
                         else:
                             tv_library_url = plugin.get_setting('tv.library.url')
                             meta_url = plugin.get_setting('tv.library')
-                            if tv_library_url and meta_url:
+                            if tv_library_url == "true" and meta_url:
                                 meta_url = meta_url.replace("%Y",series_year)
                                 meta_url = meta_url.replace("%I",imdb_id)
                                 meta_url = meta_url.replace("%T","unknown")
