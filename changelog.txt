@@ -1,3 +1,6 @@
+Version 0.0.37
+- ls list fix
+
 Version 0.0.35-36
 - Subscribe to IMDb Advanced Search Urls in Maintenance
 - eg http://www.imdb.com/search/title?count=250&genres=family&production_status=released&title_type=feature&view=simple
