@@ -14,6 +14,7 @@ import urllib
 import xbmc,xbmcaddon,xbmcvfs,xbmcgui
 import xbmcplugin
 import zipfile
+from collections import OrderedDict
 #xbmc.log(repr(sys.argv))
 
 plugin = Plugin()
@@ -30,7 +31,7 @@ else:
 big_list_view = False
 
 def log(x):
-    xbmc.log(repr(x))
+    xbmc.log(repr(x),xbmc.LOGERROR)
 
 def get_icon_path(icon_name):
     addon_path = xbmcaddon.Addon().getAddonInfo("path")
@@ -48,44 +49,50 @@ def get_tvdb_id(imdb_id):
 
 @plugin.route('/ls_list/<url>/<type>/<export>')
 def ls_list(url,type,export):
+    #log(url)
     list_type = type
     big_list_view = True
     ids = []
     r = requests.get(url, headers=headers)
     html = r.text
+    #log(html)
     match = re.compile(
-        '<div class="list_item.*?href="/title/(tt.*?)/"',
+        '<div class="lister-item.*?href="/title/(tt[0-9]*)',
         flags=(re.DOTALL | re.MULTILINE)
         ).findall(html)
     ids = ids + match
+    ids = list(OrderedDict.fromkeys(ids))
+    #log(ids)
     order = ids
-    list_items = html.split('<div class="list_item ')
+    list_items = html.split('<div class="lister-item ')
     data = {}
     for list_item in list_items:
+        #log(list_item)
         temp_data = {}
-        if not re.search(r'^(odd|even)">',list_item):
-            continue
+        #if not re.search(r'^(odd|even)">',list_item):
+        #    continue
 
         img_url = ''
+        #<img alt="Go North"\nclass="loadlate"\nloadlate="https://images-na.ssl-images-amazon.com/images/M/MV5BMjE4Mjg0MjgzOV5BMl5BanBnXkFtZTgwMjU3NDc4MDI@._V1_UX140_CR0,0,140,209_AL_.jpg"
         img_match = re.search(r'"(https://images-na.ssl-images-amazon.com/images.*?)"', list_item, flags=(re.DOTALL | re.MULTILINE))
         if img_match:
             img = img_match.group(1)
             img_url = re.sub(r'S[XY].*_.jpg','SX344_.jpg',img) #NOTE 344 is Confluence List View width
-
+        #log(img_url)
         temp_data['thumbnail'] = img_url
         title = ''
         imdbID = ''
         year = ''
-        #
-        title_match = re.search(r'<b><a.*?href="/title/(tt[0-9]*)/".*?>(.*?)</a>', list_item, flags=(re.DOTALL | re.MULTILINE))
+        #<a href="/title/tt4649466/?ref_=ttls_li_tt"\n>Kingsman: The Golden Circle</a>
+        title_match = re.search(r'<a.*?href="/title/(tt[0-9]*)/\?ref_=ttls_li_tt.*?>(.*?)</a>', list_item, flags=(re.DOTALL | re.MULTILINE))
         if title_match:
             imdbID = title_match.group(1)
             title = title_match.group(2)
         temp_data['title'] = HTMLParser.HTMLParser().unescape(title.decode('utf-8'))
 
-        #
+        #<span class="lister-item-year text-muted unbold">(2017)</span>
         type = 'featureFilm'
-        title_match = re.search(r'<span class="year_type">\((.*?)\)</span>', list_item, flags=(re.DOTALL | re.MULTILINE))
+        title_match = re.search(r'<span class="lister-item-year.*?>\((.*?)\)</span>', list_item, flags=(re.DOTALL | re.MULTILINE))
         if title_match:
             year = title_match.group(1)
             if year.endswith("Series"):
@@ -121,9 +128,14 @@ def ls_list(url,type,export):
         #TODO or can't do
         temp_data['certificate'] = ''
 
+        #log(imdbID)
+        #log(temp_data)
         data[imdbID] = temp_data
 
+    #<a class="flat-button lister-page-next next-page" href="/list/ls068584810/?sort=listorian:asc&page=2">
     new_url = ''
+    '''
+
     match = re.search(
         '<div class="pagination">(.*?)</div>',
         html,
@@ -138,9 +150,23 @@ def ls_list(url,type,export):
         if match:
             old_url = url.split('?')[0]
             new_url = "%s%s" % (old_url,match.group(1))
+
+    '''
+    match = re.search(
+        'class=".*?lister-page-next.*?href="(.*?)"',
+        html,
+        flags=(re.DOTALL | re.MULTILINE)
+        )
+    if match:
+        new_url = match.group(1)
+        new_url = "http://www.imdb.com" + new_url
+        #log(url)
+        #log(new_url)
     if not ids:
         return
-
+    #log("YYY")
+    #log(data)
+    #log(order)
     items = make_list(data,order,list_type,export)
     if new_url:
         path = plugin.url_for(ls_list, url=new_url, type=list_type, export=export)
@@ -182,13 +208,18 @@ def rss(url,type,export):
 
 @plugin.route('/watchlist/<url>/<type>/<export>')
 def watchlist(url,type,export):
+    #log("XXX")
+    #log(url)
     big_list_view = True
     r = requests.get(url, headers=headers)
     html = r.text
+    #log(html)
     match = re.search(r'IMDbReactInitialState\.push\(({.*?})\);',html)
     if match:
         data = match.group(1)
+        #log(data)
         imdb = json.loads(data)
+        #log(imdb)
         imdb_list = imdb['list']
         imdb_items = imdb_list['items']
         imdb_ids = imdb['titles']
@@ -528,7 +559,7 @@ def update_tv_series(imdb_id):
         xml = z.read()
     except:
         return
-
+    log(xml)
     match = re.search('<FirstAired>([0-9]{4}).*?</FirstAired>',xml)
     if match:
         series_year = match.group(1)
