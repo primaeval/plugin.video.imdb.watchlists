@@ -77,7 +77,7 @@ def ls_list(url,type,export):
         img_match = re.search(r'"(https://images-na.ssl-images-amazon.com/images.*?)"', list_item, flags=(re.DOTALL | re.MULTILINE))
         if img_match:
             img = img_match.group(1)
-            img_url = re.sub(r'S[XY].*_.jpg','SX344_.jpg',img) #NOTE 344 is Confluence List View width
+            img_url = re.sub(r'U[XY].*_.jpg','SX344_.jpg',img) #NOTE 344 is Confluence List View width
         #log(img_url)
         temp_data['thumbnail'] = img_url
         title = ''
@@ -559,7 +559,7 @@ def update_tv_series(imdb_id):
         xml = z.read()
     except:
         return
-    log(xml)
+    #log(xml)
     match = re.search('<FirstAired>([0-9]{4}).*?</FirstAired>',xml)
     if match:
         series_year = match.group(1)
