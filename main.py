@@ -16,6 +16,7 @@ import xbmcplugin
 import zipfile
 from collections import OrderedDict
 #xbmc.log(repr(sys.argv))
+from trakt import Trakt
 
 plugin = Plugin()
 
@@ -321,7 +322,74 @@ def list_titles(imdb_ids,order,list_type,export):
 
     return make_list(data,order,list_type,export)
 
+def on_token_refreshed(response):
+    plugin.set_setting( "authorization", json.dumps(response))
 
+def authenticate():
+    dialog = xbmcgui.Dialog()
+    pin = dialog.input('Open a web browser at %s' % Trakt['oauth'].pin_url(), type=xbmcgui.INPUT_ALPHANUM)
+    if not pin:
+        return False
+    authorization = Trakt['oauth'].token_exchange(pin, 'urn:ietf:wg:oauth:2.0:oob')
+    if not authorization:
+        return False
+    plugin.set_setting( "authorization", json.dumps(authorization))
+    return True
+
+
+@plugin.route('/add_to_trakt_watchlist/<type>/<imdb_id>/<title>')
+def add_to_trakt_watchlist(type,imdb_id,title):
+    Trakt.configuration.defaults.app(
+        id=8835
+    )
+    Trakt.configuration.defaults.client(
+        id="aa1c239000c56319a64014d0b169c0dbf03f7770204261c9edbe8ae5d4e50332",
+        secret="250284a95fd22e389b565661c98d0f33ac222e9d03c43b5931e03946dbf858dc"
+    )
+    Trakt.on('oauth.token_refreshed', on_token_refreshed)
+    if not plugin.get_setting('authorization'):
+        if not authenticate():
+            return
+    authorization = json.loads(plugin.get_setting('authorization'))
+    with Trakt.configuration.oauth.from_response(authorization, refresh=True):
+        result = Trakt['sync/watchlist'].add({
+            type: [
+                {
+                    'ids': {
+                        'imdb': imdb_id
+                    }
+                }
+            ]
+        })
+        dialog = xbmcgui.Dialog()
+        dialog.notification("Trakt: add to watchlist",title)
+
+@plugin.route('/add_to_trakt_collection/<type>/<imdb_id>/<title>')
+def add_to_trakt_collection(type,imdb_id,title):
+    Trakt.configuration.defaults.app(
+        id=8835
+    )
+    Trakt.configuration.defaults.client(
+        id="aa1c239000c56319a64014d0b169c0dbf03f7770204261c9edbe8ae5d4e50332",
+        secret="250284a95fd22e389b565661c98d0f33ac222e9d03c43b5931e03946dbf858dc"
+    )
+    Trakt.on('oauth.token_refreshed', on_token_refreshed)
+    if not plugin.get_setting('authorization'):
+        if not authenticate():
+            return
+    authorization = json.loads(plugin.get_setting('authorization'))
+    with Trakt.configuration.oauth.from_response(authorization, refresh=True):
+        result = Trakt['sync/collection'].add({
+            type: [
+                {
+                    'ids': {
+                        'imdb': imdb_id
+                    }
+                }
+            ]
+        })
+        dialog = xbmcgui.Dialog()
+        dialog.notification("Trakt: add to collection",title)
 
 def make_list(imdb_ids,order,list_type,export):
     if export == "True":
@@ -346,8 +414,10 @@ def make_list(imdb_ids,order,list_type,export):
 
         meta_url = ''
         if type == "series": #TODO episode
+            trakt_type = 'shows'
             meta_url = "plugin://plugin.video.imdb.watchlists/meta_tvdb/%s/%s" % (imdb_id,urllib.quote_plus(title.encode("utf8")))
         elif type == "featureFilm":
+            trakt_type = 'movies'
             meta_url = 'plugin://%s/movies/play/imdb/%s/library' % (plugin.get_setting('catchup.plugin').lower(),imdb_id)
         context_items = []
         try:
@@ -360,6 +430,8 @@ def make_list(imdb_ids,order,list_type,export):
         ('Add to Library', 'XBMC.RunPlugin(%s)' % (plugin.url_for('add_to_library', imdb_id=imdb_id, type=type, title=urllib.quote_plus(title.encode("utf8")), year=year))))
         context_items.append(
         ('Delete from Library', 'XBMC.RunPlugin(%s)' % (plugin.url_for('delete_from_library', imdb_id=imdb_id, type=type))))
+        context_items.append(('Add to Trakt Watchlist', 'XBMC.RunPlugin(%s)' % (plugin.url_for('add_to_trakt_watchlist', type=trakt_type, imdb_id=imdb_id, title=title))))
+        context_items.append(('Add to Trakt Collection', 'XBMC.RunPlugin(%s)' % (plugin.url_for('add_to_trakt_collection', type=trakt_type, imdb_id=imdb_id, title=title))))
         try:
             if type == 'featureFilm' and xbmcaddon.Addon('plugin.video.couchpotato_manager'):
                 context_items.append(
