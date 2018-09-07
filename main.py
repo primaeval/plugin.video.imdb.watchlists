@@ -440,8 +440,8 @@ def make_list(imdb_ids,order,list_type,export):
         ('Add to Library', 'XBMC.RunPlugin(%s)' % (plugin.url_for('add_to_library', imdb_id=imdb_id, type=type, title=urllib.quote_plus(title.encode("utf8")), year=year))))
         context_items.append(
         ('Delete from Library', 'XBMC.RunPlugin(%s)' % (plugin.url_for('delete_from_library', imdb_id=imdb_id, type=type))))
-        context_items.append(('Add to Trakt Watchlist', 'XBMC.RunPlugin(%s)' % (plugin.url_for('add_to_trakt_watchlist', type=trakt_type, imdb_id=imdb_id, title=title))))
-        context_items.append(('Add to Trakt Collection', 'XBMC.RunPlugin(%s)' % (plugin.url_for('add_to_trakt_collection', type=trakt_type, imdb_id=imdb_id, title=title))))
+        context_items.append(('Add to Trakt Watchlist', 'XBMC.RunPlugin(%s)' % (plugin.url_for('add_to_trakt_watchlist', type=trakt_type, imdb_id=imdb_id, title=title.encode("utf8")))))
+        context_items.append(('Add to Trakt Collection', 'XBMC.RunPlugin(%s)' % (plugin.url_for('add_to_trakt_collection', type=trakt_type, imdb_id=imdb_id, title=title.encode("utf8")))))
         try:
             if type == 'featureFilm' and xbmcaddon.Addon('plugin.video.couchpotato_manager'):
                 context_items.append(
